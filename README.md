@@ -1,0 +1,12 @@
+# User Analytics Analysis
+
+```bash
+python test.py
+streamlit run visualize_analysis.py
+```
+
+## Requirements
+
+```bash
+pip install -r requirements.txt
+```
