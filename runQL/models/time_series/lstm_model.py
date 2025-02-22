@@ -114,6 +114,7 @@ try:
             y = torch.FloatTensor(y_scaled).to(self.device)
             dataset = TensorDataset(X, y)
 
+            # pylint: disable=attribute-defined-outside-init
             self.scale_params = {
                 "X_mean": X_mean,
                 "X_std": X_std,
