@@ -10,3 +10,11 @@ streamlit run visualize_analysis.py
 ```bash
 pip install -r requirements.txt
 ```
+
+## RunQL
+
+```bash
+cd runQL
+pip install -e .
+```
+
