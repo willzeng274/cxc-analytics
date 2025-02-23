@@ -23,3 +23,4 @@ pillow==11.1.0
 cloudpickle==3.1.1
 numba==0.61.0
 networkx==3.4.2
+kaleido==0.2.1

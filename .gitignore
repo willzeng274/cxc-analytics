@@ -8,3 +8,5 @@ runQL/__pycache__/
 runQL/cached_data/
 runQL/cached_models/
 runQL/data/
+__MACOSX/
+.DS_Store

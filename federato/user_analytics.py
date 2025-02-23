@@ -1,13 +1,10 @@
 import pandas as pd
 import glob
 import json
-from datetime import datetime
-import numpy as np
-from scipy import stats
 
 def load_data(year=2025):
     """Load all CSV chunks for a given year and combine them into a single DataFrame."""
-    csv_files = glob.glob(f"{year}_csv/*_chunk_*.csv")
+    csv_files = glob.glob(f"./federato/{year}_csv/*_chunk_*.csv")
     dfs = []
     for file in csv_files:
         df = pd.read_csv(file)

@@ -4,11 +4,7 @@ import plotly.express as px
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import numpy as np
-import seaborn as sns
-from plotly.colors import qualitative
 
-# Define a custom color palette for better distinction
 CUSTOM_COLORS = [
     '#1f77b4',  # Blue
     '#d62728',  # Red
@@ -26,7 +22,7 @@ def show_code(code):
     """Helper function to display code snippets."""
     st.code(code, language='python')
 
-def load_analysis_results(file_path='analysis_results.json'):
+def load_analysis_results(file_path='./federato/analysis_results.json'):
     with open(file_path, 'r') as f:
         return json.load(f)
 
@@ -37,7 +33,6 @@ def create_device_analysis_plots(results):
     the technical environment of our users and prioritize platform support.
     """)
     
-    # Create three separate pie charts in columns
     col1, col2, col3 = st.columns(3)
     
     with col1:
@@ -46,7 +41,6 @@ def create_device_analysis_plots(results):
             'Device': results['device_analysis']['device_distribution'].keys(),
             'Count': results['device_analysis']['device_distribution'].values()
         })
-        # Calculate percentages
         device_df['Percentage'] = device_df['Count'] / device_df['Count'].sum() * 100
         fig = px.pie(device_df, values='Count', names='Device',
                     title="Device Family",
@@ -76,8 +70,7 @@ def create_device_analysis_plots(results):
             'Count': results['device_analysis']['os_distribution'].values()
         })
         os_df['Percentage'] = os_df['Count'] / os_df['Count'].sum() * 100
-        # Group small categories
-        threshold = 1  # 1% threshold
+        threshold = 1
         small_os = os_df[os_df['Percentage'] < threshold]
         if not small_os.empty:
             other_sum = small_os['Count'].sum()
@@ -95,11 +88,9 @@ def create_device_analysis_plots(results):
         fig.update_traces(textposition='inside', textinfo='percent+label')
         st.plotly_chart(fig, use_container_width=True)
     
-    # Add a bar chart showing the absolute numbers
     st.subheader("Detailed Distribution (Absolute Numbers)")
     fig = go.Figure()
     
-    # Add traces for each category
     fig.add_trace(go.Bar(
         name='Device Family',
         x=list(results['device_analysis']['device_distribution'].keys()),
@@ -135,10 +126,8 @@ def create_device_analysis_plots(results):
 def create_geographic_analysis_plots(results):
     st.header("🌍 Geographic Analysis")
     
-    # Country distribution
     st.subheader("Country Distribution")
     
-    # Create two columns for bar chart and pie chart
     col1, col2 = st.columns(2)
     
     country_df = pd.DataFrame({
@@ -154,7 +143,6 @@ def create_geographic_analysis_plots(results):
     
     with col2:
         st.write("Events by Country (Percentage)")
-        # Calculate percentages for pie chart
         country_df['Percentage'] = country_df['Events'] / country_df['Events'].sum() * 100
         fig_pie = px.pie(country_df, values='Events', names='Country',
                         title="Country Distribution",
@@ -162,10 +150,8 @@ def create_geographic_analysis_plots(results):
         fig_pie.update_traces(textposition='inside', textinfo='percent+label')
         st.plotly_chart(fig_pie, use_container_width=True)
     
-    # Top 10 cities
     st.subheader("Top 10 Cities")
     
-    # Create two columns for bar chart and pie chart
     col1, col2 = st.columns(2)
     
     city_df = pd.DataFrame({
@@ -181,7 +167,6 @@ def create_geographic_analysis_plots(results):
     
     with col2:
         st.write("Events by City (Percentage)")
-        # Calculate percentages for pie chart
         city_df['Percentage'] = city_df['Events'] / city_df['Events'].sum() * 100
         fig_pie = px.pie(city_df, values='Events', names='City',
                         title="City Distribution",
@@ -192,7 +177,6 @@ def create_geographic_analysis_plots(results):
 def create_temporal_analysis_plots(results):
     st.header("⏰ Temporal Analysis")
     
-    # Daily events
     st.subheader("Daily Event Counts")
     daily_counts = pd.DataFrame.from_dict(
         results['data_quality_analysis']['temporal_patterns']['daily_event_counts'],
@@ -201,25 +185,89 @@ def create_temporal_analysis_plots(results):
     )
     daily_counts.index = pd.to_datetime(daily_counts.index)
     
-    fig = px.line(daily_counts, x=daily_counts.index, y='count',
-                  title="Daily Event Counts Over Time")
+    # Function to format numbers (e.g., 150000 -> "150k")
+    def format_number(num):
+        if num >= 1_000_000:
+            return f"{num/1_000_000:.0f}M"
+        elif num >= 1_000:
+            return f"{num/1_000:.0f}k"
+        else:
+            return str(int(num))
+    
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=daily_counts.index,
+            y=daily_counts['count'],
+            mode='lines+markers',
+            line=dict(color='#1f77b4', width=2),
+            marker=dict(size=6),
+            name='Daily Events'
+        )
+    )
+    
+    fig.update_layout(
+        title="Daily Event Counts Over Time",
+        xaxis_title="Date",
+        yaxis_title="Number of Events",
+        xaxis=dict(
+            tickangle=-45,
+            tickformat='%Y-%m-%d',
+            showgrid=True,
+            gridcolor='rgba(211, 211, 211, 0.5)'
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor='rgba(211, 211, 211, 0.5)',
+            tickformat=',d'
+        ),
+        showlegend=False,
+        hovermode='x unified'
+    )
     st.plotly_chart(fig, use_container_width=True)
     
-    # Hourly distribution
     st.subheader("Events by Hour of Day")
     hourly_df = pd.DataFrame({
-        'Hour': results['event_analysis']['hourly_distribution'].keys(),
-        'Events': results['event_analysis']['hourly_distribution'].values()
-    })
-    fig = px.bar(hourly_df, x='Hour', y='Events',
-                 title="Hourly Event Distribution",
-                 color_discrete_sequence=['lightseagreen'])
+        'Hour': [int(hour) for hour in results['event_analysis']['hourly_distribution'].keys()],
+        'Events': list(results['event_analysis']['hourly_distribution'].values())
+    }).sort_values('Hour')
+    
+    fig = go.Figure()
+    fig.add_trace(
+        go.Bar(
+            x=hourly_df['Hour'],
+            y=hourly_df['Events'],
+            marker_color='#2ecc71',
+            text=hourly_df['Events'].apply(format_number),
+            textposition='outside'
+        )
+    )
+    
+    fig.update_layout(
+        title="Hourly Event Distribution",
+        xaxis_title="Hour of Day",
+        yaxis_title="Number of Events",
+        xaxis=dict(
+            tickmode='array',
+            ticktext=[f"{str(i).zfill(2)}:00" for i in range(24)],
+            tickvals=list(range(24)),
+            tickangle=45,
+            showgrid=True,
+            gridcolor='rgba(211, 211, 211, 0.5)'
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor='rgba(211, 211, 211, 0.5)',
+            tickformat=',d'
+        ),
+        showlegend=False,
+        bargap=0.2
+    )
     st.plotly_chart(fig, use_container_width=True)
 
 def create_event_analysis_plots(results):
     st.header("🎯 Event Analysis")
     
-    # Top 20 event types
     st.subheader("Top 20 Event Types")
     event_types = pd.DataFrame.from_dict(
         results['event_analysis']['event_type_distribution'],
@@ -238,7 +286,6 @@ def create_user_session_analysis_plots(results):
     col1, col2 = st.columns(2)
     
     with col1:
-        # Events per session
         st.subheader("Events per Session")
         eps = results['event_pattern_analysis']['session_patterns']['events_per_session']
         eps_df = pd.DataFrame({
@@ -248,7 +295,6 @@ def create_user_session_analysis_plots(results):
         fig = px.box(eps_df, y='value', title="Events per Session Distribution")
         st.plotly_chart(fig, use_container_width=True)
         
-        # Events per user
         st.subheader("Events per User")
         epu = results['event_pattern_analysis']['user_patterns']['events_per_user']
         epu_df = pd.DataFrame({
@@ -259,7 +305,6 @@ def create_user_session_analysis_plots(results):
         st.plotly_chart(fig, use_container_width=True)
     
     with col2:
-        # Session duration
         st.subheader("Session Duration")
         sd = results['event_pattern_analysis']['session_patterns']['session_duration']
         sd_df = pd.DataFrame({
@@ -269,7 +314,6 @@ def create_user_session_analysis_plots(results):
         fig = px.box(sd_df, y='value', title="Session Duration Distribution (seconds)")
         st.plotly_chart(fig, use_container_width=True)
         
-        # Sessions per user
         st.subheader("Sessions per User")
         spu = results['event_pattern_analysis']['user_patterns']['sessions_per_user']
         spu_df = pd.DataFrame({
@@ -282,7 +326,6 @@ def create_user_session_analysis_plots(results):
 def create_event_sequence_plot(results):
     st.header("🔄 Event Sequence Analysis")
     
-    # Most common event sequences
     st.subheader("Most Common Event Sequences")
     event_pairs = pd.DataFrame.from_dict(
         results['event_pattern_analysis']['event_sequences']['common_event_pairs'],
@@ -298,16 +341,13 @@ def create_event_sequence_plot(results):
 def create_user_journey_plots(results):
     st.header("🛣️ User Journey Analysis")
     
-    # Event Flow Analysis
     st.subheader("Top Event Sequences")
     
-    # Get sequences of different lengths
     sequences = results.get('journey_analysis', {}).get('event_flows', {})
     if not sequences or not any(sequences.values()):
         st.warning("No event sequence data available.")
         return
         
-    # Display sequences for each length
     for length in [2, 3, 4, 5]:
         sequence_key = f'sequences_{length}'
         if sequence_key in sequences and sequences[sequence_key]:
@@ -324,7 +364,6 @@ def create_user_journey_plots(results):
                         orientation='h')
             st.plotly_chart(fig, use_container_width=True)
     
-    # Entry/Exit Points
     if 'path_analysis' in results['journey_analysis']:
         col1, col2 = st.columns(2)
         with col1:
@@ -347,12 +386,10 @@ def create_user_journey_plots(results):
                         title="Last Events in Sessions")
             st.plotly_chart(fig, use_container_width=True)
     
-    # User Segments
     if 'user_segments' in results['journey_analysis']:
         st.subheader("User Segments Analysis")
         segments = results['journey_analysis']['user_segments']
         
-        # Create a summary of segments
         segment_summary = []
         for segment_id, data in segments.items():
             top_events = list(data['top_events'].items())
@@ -368,7 +405,6 @@ def create_user_journey_plots(results):
         
         st.dataframe(pd.DataFrame(segment_summary))
     
-    # Conversion Funnels
     if 'conversion_funnels' in results['journey_analysis']:
         st.subheader("Conversion Funnels")
         for funnel_name, funnel_data in results['journey_analysis']['conversion_funnels'].items():
@@ -391,51 +427,152 @@ def create_user_journey_plots(results):
 def create_temporal_relationship_plots(results):
     st.header("⏰ Temporal Relationships")
     
-    # Hourly patterns
     st.subheader("Hourly Activity Patterns")
     hourly_patterns = results['temporal_relationships']['hourly_patterns']
     
-    # Create hourly distribution plot
+    # Create a DataFrame with all hours (0-23) and merge with actual data
+    all_hours = pd.DataFrame({'Hour': range(24)})
     hourly_dist = hourly_patterns['distribution']
-    hourly_df = pd.DataFrame({
-        'Hour': list(hourly_dist.keys()),
+    data_df = pd.DataFrame({
+        'Hour': [int(hour) for hour in hourly_dist.keys()],
         'Events': list(hourly_dist.values())
-    }).sort_values('Hour')
+    })
     
-    fig = px.line(hourly_df, x='Hour', y='Events',
-                  title="Activity by Hour of Day",
-                  markers=True)
-    fig.update_layout(xaxis_title="Hour (24h format)",
-                     yaxis_title="Number of Events")
+    # Merge to ensure all hours are present
+    hourly_df = pd.merge(all_hours, data_df, on='Hour', how='left').fillna(0)
+    hourly_df = hourly_df.sort_values('Hour')
+    
+    # Function to format numbers (e.g., 150000 -> "150k")
+    def format_number(num):
+        if num >= 1_000_000:
+            return f"{num/1_000_000:.0f}M"
+        elif num >= 1_000:
+            return f"{num/1_000:.0f}k"
+        else:
+            return str(int(num))
+    
+    # Create figure using go.Figure
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=hourly_df['Hour'],
+            y=hourly_df['Events'],
+            mode='lines+markers+text',
+            line=dict(color='#1f77b4', width=2),
+            marker=dict(size=8),
+            text=hourly_df['Events'].apply(format_number),
+            textposition='top center',
+            textfont=dict(color='#1f77b4', size=10)
+        )
+    )
+    
+    fig.update_layout(
+        title="Activity by Hour of Day",
+        xaxis_title="Hour of Day",
+        yaxis_title="Number of Events",
+        xaxis=dict(
+            tickmode='array',
+            ticktext=[f"{str(i).zfill(2)}:00" for i in range(24)],
+            tickvals=list(range(24)),
+            range=[-0.5, 23.5],
+            tickangle=45,
+            showgrid=True,
+            gridcolor='rgba(211, 211, 211, 0.5)'
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor='rgba(211, 211, 211, 0.5)',
+            tickformat=',d'
+        ),
+        showlegend=False
+    )
     st.plotly_chart(fig, use_container_width=True)
     
-    # Peak hours analysis
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("Peak Hours")
         peak_hours = hourly_patterns['peak_hours']
         peak_df = pd.DataFrame({
-            'Hour': list(peak_hours.keys()),
+            'Hour': [f"{str(int(hour)).zfill(2)}:00" for hour in peak_hours.keys()],  # Format hours as "HH:00"
             'Events': list(peak_hours.values())
-        })
-        fig = px.bar(peak_df, x='Hour', y='Events',
-                    title="Top 5 Busiest Hours",
-                    color_discrete_sequence=['#2ecc71'])
+        }).sort_values('Events', ascending=False)  # Sort by events in descending order
+        
+        fig = go.Figure()
+        fig.add_trace(
+            go.Bar(
+                x=peak_df['Hour'],
+                y=peak_df['Events'],
+                marker_color='#2ecc71',
+                text=peak_df['Events'].apply(format_number),
+                textposition='outside'
+            )
+        )
+        
+        fig.update_layout(
+            title="Top 5 Busiest Hours",
+            xaxis_title="Hour of Day",
+            yaxis_title="Number of Events",
+            height=450,
+            margin=dict(l=50, r=50, t=50, b=50),
+            xaxis=dict(
+                type='category',
+                categoryorder='array',
+                categoryarray=peak_df['Hour'].tolist(),
+                tickangle=45,
+                showgrid=True,
+                gridcolor='rgba(211, 211, 211, 0.5)'
+            ),
+            yaxis=dict(
+                showgrid=True,
+                gridcolor='rgba(211, 211, 211, 0.5)',
+                tickformat=',d'
+            ),
+            showlegend=False,
+            bargap=0.15
+        )
         st.plotly_chart(fig, use_container_width=True)
     
     with col2:
         st.subheader("Quiet Hours")
         quiet_hours = hourly_patterns['quiet_hours']
         quiet_df = pd.DataFrame({
-            'Hour': list(quiet_hours.keys()),
+            'Hour': [int(hour) for hour in quiet_hours.keys()],
             'Events': list(quiet_hours.values())
-        })
-        fig = px.bar(quiet_df, x='Hour', y='Events',
-                    title="5 Quietest Hours",
-                    color_discrete_sequence=['#e74c3c'])
+        }).sort_values('Hour')
+        
+        fig = go.Figure()
+        fig.add_trace(
+            go.Bar(
+                x=quiet_df['Hour'],
+                y=quiet_df['Events'],
+                marker_color='#e74c3c',
+                text=quiet_df['Events'].apply(format_number),
+                textposition='outside'
+            )
+        )
+        
+        fig.update_layout(
+            title="5 Quietest Hours",
+            xaxis_title="Hour of Day",
+            yaxis_title="Number of Events",
+            height=500,
+            xaxis=dict(
+                tickmode='array',
+                ticktext=[f"{str(i).zfill(2)}:00" for i in quiet_df['Hour']],
+                tickvals=quiet_df['Hour'],
+                tickangle=45,
+                showgrid=True,
+                gridcolor='rgba(211, 211, 211, 0.5)'
+            ),
+            yaxis=dict(
+                showgrid=True,
+                gridcolor='rgba(211, 211, 211, 0.5)',
+                tickformat=',d'
+            ),
+            showlegend=False
+        )
         st.plotly_chart(fig, use_container_width=True)
     
-    # Weekday patterns
     st.subheader("Weekly Patterns")
     weekday_patterns = results['temporal_relationships']['weekday_patterns']
     weekday_dist = weekday_patterns['weekday_distribution']
@@ -444,19 +581,42 @@ def create_temporal_relationship_plots(results):
         'Events': list(weekday_dist.values())
     })
     
-    fig = px.bar(weekday_df, x='Weekday', y='Events',
-                 title="Events by Day of Week",
-                 color_discrete_sequence=['#3498db'])
+    fig = go.Figure()
+    fig.add_trace(
+        go.Bar(
+            x=weekday_df['Weekday'],
+            y=weekday_df['Events'],
+            marker_color='#3498db',
+            text=weekday_df['Events'].apply(format_number),
+            textposition='outside'
+        )
+    )
+    
+    fig.update_layout(
+        title="Events by Day of Week",
+        xaxis_title="Day of Week",
+        yaxis_title="Number of Events",
+        height=500,
+        xaxis=dict(
+            tickangle=0,
+            showgrid=True,
+            gridcolor='rgba(211, 211, 211, 0.5)'
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor='rgba(211, 211, 211, 0.5)',
+            tickformat=',d'
+        ),
+        showlegend=False
+    )
     st.plotly_chart(fig, use_container_width=True)
 
 def create_geographic_relationship_plots(results):
     st.header("🌍 Geographic Relationships")
     
-    # Country-Device Distribution
     st.subheader("Device Usage by Country")
     country_devices = results['geographic_relationships']['country_device_distribution']
     
-    # Select top countries
     top_countries = sorted(
         country_devices.items(),
         key=lambda x: sum(x[1].values()),
@@ -479,11 +639,9 @@ def create_geographic_relationship_plots(results):
                  labels={'Percentage': 'Percentage of Users'})
     st.plotly_chart(fig, use_container_width=True)
     
-    # City Patterns
     st.subheader("City-Level Analytics")
     city_patterns = pd.DataFrame(results['geographic_relationships']['city_patterns'])
     
-    # Multiple metrics visualization
     fig = make_subplots(rows=2, cols=2,
                        subplot_titles=("Total Events", "Unique Users",
                                      "Events per User", "Sessions per User"))
@@ -526,7 +684,6 @@ def create_user_flow_sankey(results):
     """)
     
     try:
-        # Get sequences of different lengths
         sequences = results.get('journey_analysis', {}).get('event_flows', {})
         if not sequences:
             st.warning("No event sequence data available for Sankey diagrams.")
@@ -534,7 +691,7 @@ def create_user_flow_sankey(results):
         
         def clean_event_name(name, position=None):
             """Clean and format event names for display."""
-            # Convert to string and clean up common prefixes
+
             name = str(name)
             name = name.replace('account-lines:::', '')
             name = name.replace('account:::', '')
@@ -542,11 +699,6 @@ def create_user_flow_sankey(results):
             name = name.replace(':::', '::')
             name = name.replace('::', ':')
             
-            # Truncate if too long
-            if len(name) > 30:
-                name = name[:27] + '...'
-            
-            # Add position if provided
             if position is not None:
                 name = f"{name} ({position})"
             
@@ -556,30 +708,23 @@ def create_user_flow_sankey(results):
             if not sequences_data:
                 return None
             
-            # Process sequences and their counts
             nodes = []
             node_indices = {}
             links = []
             values = []
             
-            # Process each sequence
             for sequence, count in sequences_data.items():
-                # Split sequence into individual events
                 events = sequence.split(" → ")
                 if len(events) != length:
                     continue
                 
-                # Process each event in the sequence
                 for i, event in enumerate(events):
-                    # Create node name with position
                     node_name = clean_event_name(event, i+1)
                     
-                    # Add node if not already present
                     if node_name not in node_indices:
                         node_indices[node_name] = len(nodes)
                         nodes.append(node_name)
                     
-                    # Create links between consecutive events
                     if i < len(events) - 1:
                         next_node = clean_event_name(events[i+1], i+2)
                         source = node_indices[node_name]
@@ -594,12 +739,11 @@ def create_user_flow_sankey(results):
             if not links:
                 return None
             
-            # Create Sankey diagram
             fig = go.Figure(data=[go.Sankey(
                 node=dict(
-                    pad=20,
-                    thickness=20,
-                    line=dict(color="black", width=0.5),
+                    pad=25,
+                    thickness=15,
+                    line=dict(color="rgba(0,0,0,0)", width=0),
                     label=nodes,
                     color=[CUSTOM_COLORS[i % len(CUSTOM_COLORS)] for i in range(len(nodes))]
                 ),
@@ -607,18 +751,27 @@ def create_user_flow_sankey(results):
                     source=[link[0] for link in links],
                     target=[link[1] for link in links],
                     value=values,
-                    color=['rgba(52, 152, 219, 0.2)'] * len(links)
+                    color=['rgba(52, 152, 219, 0.2)'] * len(links),
+                ),
+                textfont=dict(
+                    family="Times New Roman",
+                    size=14,
+                    color="black",
+                    shadow="none",
                 )
             )])
             
             fig.update_layout(
                 title=f"Top {'20' if length == 2 else '10'} Most Common {length}-Event Sequences",
-                font_size=10,
-                height=600
+                height=1000 if length == 2 else 800,
+                font=dict(
+                    size=16,
+                    color='black'
+                ),
+                title_font_size=18
             )
             return fig
         
-        # Create Sankey diagrams for each sequence length
         for length in [2, 3, 4, 5]:
             sequence_key = f'sequences_{length}'
             if sequence_key in sequences and sequences[sequence_key]:
@@ -627,7 +780,6 @@ def create_user_flow_sankey(results):
                 if fig:
                     st.plotly_chart(fig, use_container_width=True)
                     
-                    # Display sequence details in a table
                     st.write(f"**Detailed {length}-Event Sequences:**")
                     sequence_df = pd.DataFrame([
                         {
@@ -659,16 +811,55 @@ def create_temporal_heatmap(results):
     with col1:
         # Hour of day distribution
         hourly_dist = results['temporal_relationships']['hourly_patterns']['distribution']
-        hourly_df = pd.DataFrame({
-            'Hour': list(hourly_dist.keys()),
-            'Events': list(hourly_dist.values())
-        }).sort_values('Hour')
         
-        fig = px.line(hourly_df, x='Hour', y='Events',
-                     title="Activity by Hour of Day",
-                     markers=True)
-        fig.update_layout(xaxis_title="Hour (24h format)",
-                         yaxis_title="Number of Events")
+        # Create a DataFrame with all hours (0-23) and merge with actual data
+        all_hours = pd.DataFrame({'Hour': range(24)})
+        data_df = pd.DataFrame({
+            'Hour': [int(hour) for hour in hourly_dist.keys()],
+            'Events': list(hourly_dist.values())
+        })
+        
+        # Merge to ensure all hours are present
+        hourly_df = pd.merge(all_hours, data_df, on='Hour', how='left').fillna(0)
+        hourly_df = hourly_df.sort_values('Hour')
+        
+        # Function to format numbers (e.g., 150000 -> "150k")
+        def format_number(num):
+            if num >= 1_000_000:
+                return f"{num/1_000_000:.0f}M"
+            elif num >= 1_000:
+                return f"{num/1_000:.0f}k"
+            else:
+                return str(int(num))
+        
+        # Create figure using go.Figure instead of px.line
+        fig = go.Figure()
+        fig.add_trace(
+            go.Scatter(
+                x=hourly_df['Hour'],
+                y=hourly_df['Events'],
+                mode='lines+markers+text',
+                line=dict(color='#1f77b4', width=2),
+                marker=dict(size=8),
+                text=hourly_df['Events'].apply(format_number),
+                textposition='top center',
+                textfont=dict(color='#1f77b4', size=10)
+            )
+        )
+        
+        fig.update_layout(
+            title="Activity by Hour of Day",
+            xaxis_title="Hour",
+            yaxis_title="Number of Events",
+            xaxis=dict(
+                tickmode='array',
+                ticktext=[str(i).zfill(2) for i in range(24)],  # 00, 01, 02, ..., 23
+                tickvals=list(range(24)),
+                range=[-0.5, 23.5],  # Ensure full range is shown
+                tickangle=45  # Tilt labels 45 degrees
+            ),
+            showlegend=False
+        )
         st.plotly_chart(fig, use_container_width=True)
     
     with col2:
@@ -691,76 +882,110 @@ def create_temporal_heatmap(results):
     weekday_hour_matrix = results['temporal_relationships']['weekday_patterns']['weekday_hour_matrix']
     weekday_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
     
-    # Convert the matrix to a format suitable for heatmap
-    matrix_data = []
-    for weekday in weekday_order:
-        if weekday in weekday_hour_matrix:
-            row = [weekday_hour_matrix[weekday].get(str(hour), 0) for hour in range(24)]
-            matrix_data.append(row)
+    # Initialize the matrix with zeros
+    matrix_data = [[0 for _ in range(24)] for _ in range(7)]
+    
+    # Fill in the matrix with actual values
+    # The data is structured as hour -> weekday -> value
+    for hour_str, weekday_data in weekday_hour_matrix.items():
+        hour = int(hour_str)
+        for weekday, value in weekday_data.items():
+            weekday_idx = weekday_order.index(weekday)
+            matrix_data[weekday_idx][hour] = value
     
     fig = go.Figure(data=go.Heatmap(
         z=matrix_data,
-        x=list(range(24)),
+        x=[f"{str(i).zfill(2)}:00" for i in range(24)],  # 00:00, 01:00, ..., 23:00
         y=weekday_order,
         colorscale='Viridis',
-        hoverongaps=False
+        hoverongaps=False,
+        colorbar=dict(
+            title=dict(
+                text="Number of Events",
+                side="right"
+            )
+        ),
+        hovertemplate="Day: %{y}<br>Hour: %{x}<br>Events: %{z:,.0f}<extra></extra>"
     ))
     
     fig.update_layout(
         title="Activity Heatmap by Weekday and Hour",
         xaxis_title="Hour of Day",
         yaxis_title="Day of Week",
-        height=400
+        xaxis=dict(
+            tickmode='array',
+            ticktext=[f"{str(i).zfill(2)}:00" for i in range(24)],
+            tickvals=list(range(24)),
+            tickangle=45,
+            showgrid=True,
+            gridcolor='rgba(211, 211, 211, 0.5)'
+        ),
+        yaxis=dict(
+            tickmode='array',
+            ticktext=weekday_order,
+            tickvals=list(range(len(weekday_order))),
+            showgrid=True,
+            gridcolor='rgba(211, 211, 211, 0.5)'
+        ),
+        height=500,  # Increased height for better visibility
+        margin=dict(l=50, r=100, t=50, b=80)  # Adjusted margins for better layout
     )
     st.plotly_chart(fig, use_container_width=True)
     
-    # Monthly Analysis
-    st.subheader("📅 Monthly Trends")
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        # Monthly distribution
-        monthly_dist = results['temporal_relationships']['monthly_patterns']['distribution']
-        monthly_df = pd.DataFrame({
-            'Month': list(monthly_dist.keys()),
-            'Events': list(monthly_dist.values())
-        }).sort_values('Month')
-        
-        fig = px.line(monthly_df, x='Month', y='Events',
-                     title="Activity by Month",
-                     markers=True)
-        fig.update_layout(xaxis_tickangle=-45)
-        st.plotly_chart(fig, use_container_width=True)
-    
-    with col2:
-        # Month-over-month growth
-        growth_data = results['temporal_relationships']['monthly_patterns']['month_over_month_growth']
-        growth_df = pd.DataFrame({
-            'Month': list(growth_data.keys()),
-            'Growth': list(growth_data.values())
-        }).sort_values('Month')
-        
-        fig = px.bar(growth_df, x='Month', y='Growth',
-                    title="Month-over-Month Growth (%)",
-                    color='Growth',
-                    color_continuous_scale='RdYlGn')
-        fig.update_layout(xaxis_tickangle=-45)
-        st.plotly_chart(fig, use_container_width=True)
-    
     # Top 10 Most Active Days
     st.subheader("📊 Peak Activity Days")
+    st.write("**Top 10 Most Active Days**")
+    
     top_days = results['temporal_relationships']['daily_patterns']['top_10_days']
     top_days_df = pd.DataFrame({
         'Date': list(top_days.keys()),
         'Events': list(top_days.values())
-    }).sort_values('Events', ascending=True)
+    })
     
-    fig = px.bar(top_days_df, x='Events', y='Date',
-                 title="Top 10 Most Active Days",
-                 orientation='h',
-                 color='Events',
-                 color_continuous_scale='Viridis')
-    fig.update_layout(height=400)
+    # Sort by events in descending order and take top 10
+    top_days_df = top_days_df.nlargest(10, 'Events')
+    # Then sort ascending for display (bottom to top)
+    top_days_df = top_days_df.sort_values('Events', ascending=True)
+    
+    # Create list of dates in the correct order (matching the sorted events)
+    dates_ordered = top_days_df['Date'].tolist()
+    
+    fig = go.Figure()
+    fig.add_trace(
+        go.Bar(
+            x=top_days_df['Events'],
+            y=dates_ordered,  # Use ordered dates list
+            orientation='h',
+            marker_color='#1f77b4',
+            text=top_days_df['Events'].apply(format_number),
+            textposition='outside',
+            textfont=dict(size=12)
+        )
+    )
+    
+    max_events = max(top_days_df['Events'])
+    
+    fig.update_layout(
+        title="Top 10 Most Active Days",
+        xaxis_title="Number of Events",
+        yaxis_title="Date",
+        height=400,
+        showlegend=False,
+        xaxis=dict(
+            showgrid=True,
+            gridcolor='rgba(211, 211, 211, 0.5)',
+            range=[0, max_events * 1.1]  # Add 10% padding for text labels
+        ),
+        yaxis=dict(
+            type='category',  # Force categorical axis
+            categoryorder='array',  # Specify the order
+            categoryarray=dates_ordered,  # Use our ordered dates
+            showgrid=True,
+            gridcolor='rgba(211, 211, 211, 0.5)'
+        ),
+        bargap=0.2,  # Add some gap between bars
+        margin=dict(l=20, r=100, t=40, b=40)  # Increased right margin for labels
+    )
     st.plotly_chart(fig, use_container_width=True)
     
     # Daily Stats Summary
@@ -807,7 +1032,6 @@ def create_user_segments_analysis(results):
         st.warning("No user segments data available.")
         return
     
-    # Create radar chart for segment comparison
     fig = go.Figure()
     
     for segment_id, data in segments.items():
@@ -818,7 +1042,6 @@ def create_user_segments_analysis(results):
         if not top_events:
             continue
             
-        # Ensure we have at least 5 events, pad with zeros if necessary
         while len(top_events) < 5:
             top_events.append((f"Event_{len(top_events)+1}", 0))
             
@@ -886,10 +1109,8 @@ def main():
     try:
         results = load_analysis_results()
         
-        # Sidebar navigation with grouped sections
         st.sidebar.title("Navigation")
         
-        # Define main sections and their subsections
         sections = {
             "Overview": None,
             "User Behavior Analysis": [
@@ -914,10 +1135,8 @@ def main():
             ]
         }
         
-        # Main section selection
         main_section = st.sidebar.radio("Main Sections", list(sections.keys()))
         
-        # Subsection selection if available
         selected_subsection = None
         if sections[main_section]:
             selected_subsection = st.sidebar.radio(
@@ -925,14 +1144,12 @@ def main():
                 sections[main_section]
             )
         
-        # Quick stats in sidebar
         st.sidebar.markdown("---")
         st.sidebar.subheader("Quick Stats")
         st.sidebar.metric("Total Events", f"{results['basic_stats']['total_events']:,}")
         st.sidebar.metric("Unique Users", f"{results['basic_stats']['unique_users']:,}")
         st.sidebar.metric("Active Sessions", f"{results['basic_stats']['unique_sessions']:,}")
         
-        # Display content based on selection
         if main_section == "Overview":
             st.write(f"### 📈 Data Range: {results['basic_stats']['date_range']['start']} to {results['basic_stats']['date_range']['end']}")
             create_device_analysis_plots(results)
@@ -964,7 +1181,6 @@ def main():
             
         elif main_section == "Technical Environment":
             if selected_subsection == "Device Distribution":
-                # Show only device family distribution
                 st.header("📱 Device Distribution")
                 device_df = pd.DataFrame({
                     'Device': results['device_analysis']['device_distribution'].keys(),
@@ -985,7 +1201,6 @@ def main():
                     st.plotly_chart(fig, use_container_width=True)
                 
             elif selected_subsection == "Operating Systems":
-                # Show platform and OS distribution
                 st.header("💻 Operating Systems")
                 
                 col1, col2 = st.columns(2)
@@ -1008,8 +1223,7 @@ def main():
                     })
                     os_df['Percentage'] = os_df['Count'] / os_df['Count'].sum() * 100
                     
-                    # Group small categories
-                    threshold = 1  # 1% threshold
+                    threshold = 1
                     small_os = os_df[os_df['Percentage'] < threshold]
                     if not small_os.empty:
                         other_sum = small_os['Count'].sum()
