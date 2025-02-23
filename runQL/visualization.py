@@ -8,10 +8,9 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-import numpy as np
 from plotly.subplots import make_subplots
 
-
+@st.cache_data
 def create_dual_axis_figure(x, y1, y2, name1, name2, title, y1_title, y2_title):
     """Create a dual axis figure using plotly"""
     fig = go.Figure()
@@ -38,7 +37,7 @@ def create_dual_axis_figure(x, y1, y2, name1, name2, title, y1_title, y2_title):
     )
     return fig
 
-
+@st.cache_data
 def create_download_buttons(fig, filename_prefix, width=None, height=None):
     """Create download buttons for a plotly figure"""
     img_buffer = io.BytesIO()
@@ -88,7 +87,7 @@ def load_saved_data():
         st.error(f"Error loading analysis data: {str(e)}")
         return None
 
-
+@st.cache_resource
 def load_model_results():
     """Load the latest model results"""
     RESULTS_DIR = Path(__file__).parent / "model_results"
@@ -105,7 +104,7 @@ def load_model_results():
         st.error(f"Error loading model results: {str(e)}")
         return None
 
-
+@st.cache_data
 def display_model_predictions():
     """Display predictions and insights from model results"""
     st.subheader("🤖 Model Predictions and Insights")
@@ -218,7 +217,7 @@ def display_model_predictions():
             st.plotly_chart(fig, use_container_width=True)
             create_download_buttons(fig, "market_segmentation_feature_importance")
 
-
+@st.cache_data
 def display_venture_capital_heatmap():
     """Display the venture capital investment data across Canada"""
     st.header("🍁 Canadian Venture Capital Investment Distribution")
@@ -839,7 +838,7 @@ def display_venture_capital_heatmap():
     st.plotly_chart(fig_top_investors, use_container_width=True)
     create_download_buttons(fig_top_investors, "top_investors_analysis", width=1600, height=600)
 
-
+@st.cache_data
 def display_funding_stage_breakdown():
     """Display funding stage breakdown visualization with three separate graphs."""
     st.header("📊 Funding Stage Breakdown")
@@ -1312,7 +1311,7 @@ def display_funding_stage_breakdown():
     st.plotly_chart(late_fig, use_container_width=True)
     create_download_buttons(late_fig, "late_stage_analysis")
 
-
+@st.cache_data
 def display_company_age_analysis():
     """Display analysis of company age vs funding rounds and deal sizes."""
     st.header("🎯 Company Age & Funding Analysis")
@@ -1510,7 +1509,7 @@ def display_company_age_analysis():
             }
         )
 
-
+@st.cache_data
 def display_stage_sector_analysis():
     """Display analysis of funding stages vs sectors over time."""
     st.header("📊 Funding Stages vs Sectors Analysis")
@@ -1685,7 +1684,7 @@ def display_stage_sector_analysis():
     st.plotly_chart(fig, use_container_width=True)
     create_download_buttons(fig, "yearly_funding_series", width=1600, height=900)
 
-
+@st.cache_data
 def display_ecosystem_sector_trends():
     """Display sector funding trends for each ecosystem."""
     st.header("🌍 Ecosystem Sector Funding Trends")
