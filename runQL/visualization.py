@@ -37,16 +37,31 @@ def create_dual_axis_figure(x, y1, y2, name1, name2, title, y1_title, y2_title):
     return fig
 
 
-def create_download_buttons(fig, filename_prefix):
+def create_download_buttons(fig, filename_prefix, width=None, height=None):
     """Create download buttons for a plotly figure"""
     img_buffer = io.BytesIO()
-    fig.write_image(img_buffer, format="png")
+    
+    download_fig = fig.to_dict()
+    download_fig = go.Figure(download_fig)
+    
+    if width or height:
+        download_fig.update_layout(
+            width=width if width else fig.layout.width,
+            height=height if height else fig.layout.height,
+            margin=dict(t=120, b=100)  # Ensure bottom margin is preserved for annotations
+        )
+    
+    # Preserve annotations from original figure
+    if 'annotations' in fig.layout:
+        download_fig.update_layout(annotations=fig.layout.annotations)
+    
+    download_fig.write_image(img_buffer, format="png")
     img_buffer.seek(0)
 
     st.download_button(
         label="Download Graph as PNG",
         data=img_buffer,
-        file_name="graph.png",
+        file_name=f"{filename_prefix}.png",
         mime="image/png",
         key=f"download_button_{filename_prefix}",
     )
@@ -203,6 +218,637 @@ def display_model_predictions():
             create_download_buttons(fig, "market_segmentation_feature_importance")
 
 
+def display_venture_capital_heatmap():
+    """Display the venture capital investment data across Canada"""
+    st.header("🍁 Canadian Venture Capital Investment Distribution")
+    
+    st.markdown(
+        """
+        <div class='insight-box'>
+        Geographic distribution of venture capital investments across Canadian ecosystems.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    companies_df = analysis['raw_data']['companies']
+    deals_df = analysis['raw_data']['deals']
+    
+    merged_df = deals_df.merge(
+        companies_df[['id', 'ecosystemName', 'primaryTag']], 
+        left_on='companyId', 
+        right_on='id', 
+        suffixes=('_deal', '')
+    )
+    
+    st.subheader("VC Year-over-Year Sector Investment Activity (2020-2024)")
+    
+    merged_df['year'] = pd.to_datetime(merged_df['date']).dt.year
+    
+    sector_stats = merged_df.groupby(['primaryTag', 'year']).agg({
+        'amount': ['sum', 'count']
+    }).reset_index()
+    
+    sector_growth = {}
+    for sector in sector_stats['primaryTag'].unique():
+        sector_data = sector_stats[sector_stats['primaryTag'] == sector]
+        total_investment = sector_data[('amount', 'sum')].sum()
+        
+        growth = 0.0
+        
+        years = sorted(sector_data['year'].unique())
+        if len(years) >= 2:
+            latest_year = max(years)
+            latest_data = sector_data[sector_data['year'] == latest_year]
+            prev_data = sector_data[sector_data['year'] == latest_year - 1]
+            
+            if not latest_data.empty and not prev_data.empty:
+                latest_amount = latest_data[('amount', 'sum')].values[0]
+                prev_amount = prev_data[('amount', 'sum')].values[0]
+                
+                if prev_amount > 0:
+                    growth = ((latest_amount - prev_amount) / prev_amount) * 100
+        
+        sector_growth[sector] = {
+            'growth': growth,
+            'total_investment': total_investment
+        }
+    
+    top_sectors = sorted(sector_growth.items(), key=lambda x: x[1]['total_investment'], reverse=True)[:5]
+    top_sector_names = [sector[0] for sector in top_sectors]
+    
+    fig_sectors = go.Figure()
+    
+    bar_color = 'rgb(2, 33, 105)'
+    line_colors = ['rgb(46, 204, 113)', 'rgb(231, 76, 60)', 'rgb(52, 152, 219)', 
+                  'rgb(155, 89, 182)', 'rgb(241, 196, 15)']
+    
+    years = list(range(2020, 2025))
+    x_positions = []
+    x_ticks = []
+    x_labels = []
+    
+    for i, sector in enumerate(top_sector_names):
+        sector_x = []
+        for year_idx, year in enumerate(years):
+            pos = i * 6 + year_idx
+            x_positions.append(pos)
+            sector_x.append(pos)
+            x_ticks.append(pos)
+            x_labels.append(year)
+    
+    year_data_list = []
+    for year_idx, year in enumerate(years):
+        year_data = []
+        year_x = []
+        for i, sector in enumerate(top_sector_names):
+            sector_data = sector_stats[sector_stats['primaryTag'] == sector]
+            year_sector_data = sector_data[sector_data['year'] == year]
+            investment_amount = year_sector_data[('amount', 'sum')].values[0] / 1e6 if not year_sector_data.empty else 0
+            year_data.append(investment_amount)
+            year_x.append(i * 6 + year_idx)
+        year_data_list.append(year_data)
+        
+        fig_sectors.add_trace(go.Bar(
+            name=str(year),
+            x=year_x,
+            y=year_data,
+            marker_color=bar_color,
+            opacity=0.6 + 0.1 * (year - 2020),
+            text=[f'${round(x, 1)}M' for x in year_data],
+            textposition='outside',
+            textfont=dict(size=10, color='black'),
+            textangle=270,
+            cliponaxis=False,
+            constraintext='none'
+        ))
+    
+    all_deal_counts = []
+    for i, sector in enumerate(top_sector_names):
+        sector_data = sector_stats[sector_stats['primaryTag'] == sector]
+        sector_data = sector_data.sort_values('year')
+        
+        sector_x = []
+        deal_counts = []
+        
+        for year_idx, year in enumerate(years):
+            year_data = sector_data[sector_data['year'] == year]
+            count = year_data[('amount', 'count')].values[0] if not year_data.empty else 0
+            deal_counts.append(count)
+            sector_x.append(i * 6 + year_idx)
+        
+        all_deal_counts.extend(deal_counts)  # Store the deal counts
+        
+        fig_sectors.add_trace(go.Scatter(
+            name=f'{sector} Deals',
+            x=sector_x,
+            y=deal_counts,
+            yaxis='y2',
+            line=dict(color=line_colors[i], width=3),
+            mode='lines+markers',
+            marker=dict(size=8),
+        ))
+    
+    max_investment = max(max(year_data) for year_data in year_data_list)
+    max_deals = max(all_deal_counts)
+
+    fig_sectors.update_layout(
+        title=dict(
+            text='TOP 5 SECTORS: INVESTMENT & DEAL VOLUME TRENDS<br>(2020-2024)',
+            font=dict(size=24, color='rgb(2, 33, 105)'),
+            x=0.5,
+            y=0.97
+        ),
+        barmode='group',
+        height=800,
+        showlegend=True,
+        legend=dict(
+            orientation='h',
+            yanchor='bottom',
+            y=1.02,
+            xanchor='right',
+            x=1
+        ),
+        yaxis=dict(
+            title='Investment Amount ($ Millions)',
+            gridcolor='rgba(128, 128, 128, 0.2)',
+            side='left',
+            range=[0, max_investment * 1.1]
+        ),
+        yaxis2=dict(
+            title='Number of Deals',
+            overlaying='y',
+            side='right',
+            showgrid=False,
+            range=[0, max_deals * 1.1]
+        ),
+        plot_bgcolor='white',
+        xaxis=dict(
+            showgrid=False,
+            tickangle=-45,
+            tickmode='array',
+            tickvals=x_ticks,
+            ticktext=x_labels,
+            tickfont=dict(size=11),
+            domain=[0, 1]
+        ),
+        margin=dict(t=170, b=80, l=80, r=80)
+    )
+    
+    for i, sector in enumerate(top_sector_names):
+        if sector in sector_growth:
+            growth_rate = sector_growth[sector]['growth']
+            fig_sectors.add_annotation(
+                x=i * 6 + 2,
+                y=-0.15,
+                text=sector,
+                showarrow=False,
+                yshift=0,
+                xanchor='center',
+                yref='paper',
+                font=dict(size=11, color='rgb(2, 33, 105)')
+            )
+            fig_sectors.add_annotation(
+                x=i * 6 + 2,
+                y=-0.22,
+                text=f"Growth: {growth_rate:.1f}%",
+                showarrow=False,
+                yshift=0,
+                xanchor='center',
+                yref='paper',
+                font=dict(size=10, color='rgb(2, 33, 105)')
+            )
+    
+    st.plotly_chart(fig_sectors, use_container_width=True)
+    create_download_buttons(fig_sectors, "sector_growth_analysis", width=1600, height=1000)
+
+    ecosystem_stats = merged_df.groupby('ecosystemName').agg({
+        'id_deal': 'count',
+        'amount': ['sum', 'mean']
+    }).round(3)
+    
+    ecosystem_stats.columns = ['Number of Deals', 'Total Investment', 'Average Deal Size']
+    ecosystem_stats = ecosystem_stats.reset_index()
+    
+    ecosystem_stats['Total Investment (B)'] = ecosystem_stats['Total Investment'] / 1e9
+    ecosystem_stats['Average Deal Size (M)'] = ecosystem_stats['Average Deal Size'] / 1e6
+    
+    total_investment = ecosystem_stats['Total Investment'].sum() / 1e9
+    total_deals = ecosystem_stats['Number of Deals'].sum()
+
+    col1_, col2_ = st.columns(2)
+    with col1_:
+        st.metric("Total Investment", f"${total_investment:.1f}B", "Across Canada")
+    with col2_:
+        st.metric("Total Deals", f"{total_deals:,}", "Investment Rounds")
+
+    st.subheader("🔍 Key Insights")
+    
+    top_deals = ecosystem_stats.nlargest(3, 'Number of Deals')
+    top_investment = ecosystem_stats.nlargest(3, 'Total Investment (B)')
+    
+    col1_, col2_ = st.columns(2)
+    
+    with col1_:
+        st.markdown("**Top 3 Ecosystems by Deal Volume:**")
+        for _, row in top_deals.iterrows():
+            pct = (row['Number of Deals'] / total_deals) * 100
+            st.markdown(f"- {row['ecosystemName']}: {row['Number of Deals']} deals ({pct:.1f}%)")
+        
+        st.markdown("""
+        **Investment Concentration:**
+        """)
+        top3_deals_pct = (top_deals['Number of Deals'].sum() / total_deals) * 100
+        st.markdown(f"- Top 3 ecosystems account for {top3_deals_pct:.1f}% of all deals")
+    
+    with col2_:
+        st.markdown("**Top 3 Ecosystems by Investment:**")
+        for _, row in top_investment.iterrows():
+            pct = (row['Total Investment'] / ecosystem_stats['Total Investment'].sum()) * 100
+            amount = row['Total Investment (B)']
+            amount_str = f"${amount:.1f}B" if amount >= 1 else f"${int(amount*1000)}M"
+            st.markdown(f"- {row['ecosystemName']}: {amount_str} ({pct:.1f}%)")
+        
+        st.markdown("""
+        **Capital Distribution:**
+        """)
+        top3_inv_pct = (top_investment['Total Investment'].sum() / ecosystem_stats['Total Investment'].sum()) * 100
+        st.markdown(f"- Top 3 ecosystems capture {top3_inv_pct:.1f}% of total investment")
+
+    ecosystem_stats_sorted = ecosystem_stats.sort_values('Number of Deals', ascending=True)
+    
+    summary_df = ecosystem_stats_sorted.copy()
+    summary_df['Deal Share (%)'] = (summary_df['Number of Deals'] / total_deals * 100).round(1)
+    summary_df['Investment Share (%)'] = (summary_df['Total Investment'] / ecosystem_stats['Total Investment'].sum() * 100).round(1)
+    summary_df.sort_values('Number of Deals', ascending=False, inplace=True)
+    
+    summary_table = pd.DataFrame({
+        'Ecosystem': summary_df['ecosystemName'],
+        'Number of Deals': summary_df['Number of Deals'],
+        'Deal Share (%)': summary_df['Deal Share (%)'].apply(lambda x: f"{x:.1f}%"),
+        'Total Investment': summary_df['Total Investment (B)'].apply(
+            lambda x: f"${x:.1f}B" if x >= 1 else f"${int(x*1000)}M"
+        ),
+        'Investment Share (%)': summary_df['Investment Share (%)'].apply(lambda x: f"{x:.1f}%"),
+        'Average Deal Size': summary_df['Average Deal Size (M)'].apply(lambda x: f"${x:.1f}M")
+    })
+    
+    st.markdown("### 📊 Detailed Metrics for Ecosystems")
+    st.dataframe(
+        summary_table,
+        hide_index=True,
+        column_config={
+            "Ecosystem": st.column_config.TextColumn("Ecosystem", width="medium"),
+            "Number of Deals": st.column_config.NumberColumn("Number of Deals", format="%d"),
+            "Deal Share (%)": st.column_config.TextColumn("% of Total Deals", width="small"),
+            "Total Investment": st.column_config.TextColumn("Total Investment", width="medium"),
+            "Investment Share (%)": st.column_config.TextColumn("% of Total Investment", width="small"),
+            "Average Deal Size": st.column_config.TextColumn("Avg Deal Size", width="medium")
+        }
+    )
+    
+    st.markdown("### 📊 Visual Comparison")
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        name='Number of Deals',
+        x=ecosystem_stats_sorted['ecosystemName'],
+        y=ecosystem_stats_sorted['Number of Deals'],
+        marker_color='rgba(52, 152, 219, 0.8)'
+    ))
+    
+    fig.add_trace(go.Bar(
+        name='Average Deal Size (M)',
+        x=ecosystem_stats_sorted['ecosystemName'],
+        y=ecosystem_stats_sorted['Average Deal Size (M)'],
+        marker_color='rgba(46, 204, 113, 0.8)'
+    ))
+    
+    fig.update_layout(
+        title='Deal Volume vs Average Deal Size by Ecosystem (Top 10)',
+        barmode='group',
+        xaxis_tickangle=-45,
+        template='plotly_white',
+        height=500,
+        showlegend=True,
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+    create_download_buttons(fig, "ecosystem_comparison")
+
+    st.markdown("### 📈 Quarterly Investment Activity")
+    
+    try:
+        quarterly_periods = pd.to_datetime(merged_df['date']).dt.to_period('Q')
+        quarterly_periods.name = 'quarter'
+        quarterly_stats = merged_df.groupby(quarterly_periods).agg({
+            'id_deal': 'count',
+            'amount': 'sum'
+        })
+        
+        quarterly_stats = quarterly_stats.reset_index()
+        
+        # Filter out 2025 data
+        quarterly_stats = quarterly_stats[quarterly_stats['quarter'].astype(str).str[:4].astype(int) < 2025]
+        
+        quarterly_stats['quarter_str'] = quarterly_stats['quarter'].astype(str)
+        quarterly_stats = quarterly_stats.sort_values('quarter')
+
+        stage_mapping = {
+            'Pre-Seed': 'Seed',
+            'Seed': 'Seed',
+            'Series A': 'Early Stage',
+            'Series B': 'Early Stage',
+            'Series C': 'Later Stage',
+            'Series D': 'Later Stage',
+            'Series E': 'Later Stage',
+            'Series F': 'Later Stage',
+            'Series G': 'Later Stage',
+            'Growth': 'Growth',
+            'Private Equity': 'Growth'
+        }
+
+        if 'roundType' in merged_df.columns:
+            merged_df['stage_category'] = merged_df['roundType'].map(stage_mapping)
+            
+            stage_quarterly_stats = {}
+            for stage in ['Seed', 'Early Stage', 'Later Stage', 'Growth']:
+                stage_data = merged_df[merged_df['stage_category'] == stage]
+                if not stage_data.empty:
+                    stage_stats = stage_data.groupby(quarterly_periods).agg({
+                        'id_deal': 'count'
+                    }).reset_index()
+                    stage_stats = stage_stats[stage_stats['quarter'].astype(str).str[:4].astype(int) < 2025]  # Filter 2025
+                    stage_stats['quarter_str'] = stage_stats['quarter'].astype(str)
+                    stage_quarterly_stats[stage] = stage_stats
+        else:
+            st.warning("Round type information not available. Stage-specific trends will not be shown.")
+            stage_quarterly_stats = {}
+        
+        fig_quarterly = go.Figure()
+
+        fig_quarterly.add_trace(go.Bar(
+            x=quarterly_stats['quarter_str'],
+            y=quarterly_stats['amount'] / 1e6,
+            name='Total Investment',
+            marker_color='rgb(2, 33, 105)',
+            width=0.7,
+            text=[f'${round(x, 1)}M' for x in quarterly_stats['amount'] / 1e6],
+            textposition='auto',
+            textfont=dict(color='white', size=13),
+            textangle=270,
+            insidetextanchor='start',
+            hovertemplate='<b>%{x}</b><br>Investment: $%{y:.1f}M<br><extra></extra>'
+        ))
+
+        fig_quarterly.add_trace(go.Scatter(
+            x=quarterly_stats['quarter_str'],
+            y=quarterly_stats['id_deal'],
+            name='Total Deals',
+            yaxis='y2',
+            mode='lines+markers+text',
+            line=dict(color='rgb(52, 152, 219)', width=2),
+            marker=dict(size=8),
+            text=quarterly_stats['id_deal'],
+            textposition='top center',
+            textfont=dict(size=12, color='rgba(52, 152, 219, 0.8)')
+        ))
+
+        colors = {
+            'Seed': 'rgb(46, 204, 113)',
+            'Early Stage': 'rgb(241, 196, 15)',
+            'Later Stage': 'rgb(155, 89, 182)',
+            'Growth': 'rgb(230, 126, 34)'
+        }
+
+        for stage, stats in stage_quarterly_stats.items():
+            fig_quarterly.add_trace(go.Scatter(
+                x=stats['quarter_str'],
+                y=stats['id_deal'],
+                name=f'{stage} Deals',
+                mode='lines',
+                yaxis='y2',
+                line=dict(color=colors[stage], width=2),
+            ))
+
+        # Calculate yearly totals
+        yearly_stats = merged_df.groupby(pd.to_datetime(merged_df['date']).dt.year).agg({
+            'id_deal': 'count',
+            'amount': 'sum'
+        }).reset_index()
+        yearly_stats = yearly_stats[yearly_stats['date'] < 2025]  # Filter 2025
+        
+        # Add yearly totals as annotations
+        yearly_annotations = []
+        for year in yearly_stats['date'].unique():
+            year_data = yearly_stats[yearly_stats['date'] == year]
+            deals = year_data['id_deal'].iloc[0]
+            amount = year_data['amount'].iloc[0] / 1e9  # Convert to billions
+            
+            # Find the x-position (middle of the year)
+            year_quarters = [f"{year}Q{q}" for q in range(1, 5)]
+            if all(q in quarterly_stats['quarter_str'].values for q in year_quarters):
+                x_pos = year_quarters[1]  # Position at Q2 for better centering
+                
+                yearly_annotations.extend([
+                    dict(
+                        x=x_pos,
+                        y=-0.15,  # Position below x-axis
+                        text=f"{year}<br>{deals} DEALS",
+                        showarrow=False,
+                        font=dict(size=10, color='rgb(52, 152, 219)'),
+                        xanchor='center',
+                        yanchor='top',
+                        yref='paper',
+                        xref='x'
+                    ),
+                    dict(
+                        x=x_pos,
+                        y=-0.25,  # Position below the deals count
+                        text=f"${amount:.1f}B",
+                        showarrow=False,
+                        font=dict(size=10, color='rgb(2, 33, 105)'),
+                        xanchor='center',
+                        yanchor='top',
+                        yref='paper',
+                        xref='x'
+                    )
+                ])
+
+        fig_quarterly.update_layout(
+            title=dict(
+                text='VENTURE CAPITAL<br>INVESTMENT ACTIVITY',
+                font=dict(size=24, color='rgb(2, 33, 105)'),
+                x=0.5,
+                y=0.95
+            ),
+            xaxis=dict(
+                title="",
+                tickangle=-45,
+                showgrid=False,
+                showline=True,
+                linecolor="rgb(204, 204, 204)",
+                linewidth=2,
+                type="category",
+                tickmode='array',
+                ticktext=[f"Q{q}" if q <= 4 else "" for year in range(2019, 2025) for q in range(1, 5)],
+                tickvals=quarterly_stats['quarter_str']
+            ),
+            yaxis=dict(
+                title="$ Millions Invested",
+                showgrid=True,
+                gridcolor="rgb(204, 204, 204)",
+                tickformat="$,.0f",
+                range=[0, max(quarterly_stats['amount'] / 1e6) * 1.2],
+                showline=True,
+                linecolor="rgb(204, 204, 204)",
+                linewidth=2
+            ),
+            yaxis2=dict(
+                title="Number of Deals",
+                overlaying="y",
+                side="right",
+                showgrid=False,
+                range=[0, max(quarterly_stats['id_deal']) * 1.2],
+                showline=True,
+                linecolor="rgb(204, 204, 204)",
+                linewidth=2
+            ),
+            showlegend=True,
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="right",
+                x=1
+            ),
+            plot_bgcolor='white',
+            height=600,
+            margin=dict(t=120, b=100),  # Increased bottom margin to accommodate annotations
+            hovermode='x unified',
+            annotations=yearly_annotations
+        )
+
+        fig_quarterly.update_yaxes(
+            gridwidth=1,
+            gridcolor='rgba(128, 128, 128, 0.2)',
+            griddash='dot'
+        )
+
+        st.plotly_chart(fig_quarterly, use_container_width=True)
+        create_download_buttons(fig_quarterly, "quarterly_activity", width=1600, height=900)
+    except Exception as e:
+        st.error(f"Error in quarterly investment visualization: {str(e)}")
+        st.error(f"Detailed error: {traceback.format_exc()}")
+
+    st.markdown("### 🏆 Top Investors by Deal Volume and Investment")
+    
+    deals_df = pd.DataFrame(analysis['raw_data']['deals'])
+    investors_df = pd.DataFrame(analysis["raw_data"]["deal_investor"])
+    
+    merged_df = pd.merge(investors_df[['dealId', 'investorName', 'investorId']], deals_df[['id', 'amount']],
+                        left_on='dealId', right_on='id', 
+                        how='left')
+    
+    deal_counts = merged_df.groupby('dealId').size().reset_index(name='num_investors')
+    merged_df = pd.merge(merged_df, deal_counts, on='dealId')
+    
+    merged_df['estimated_amount'] = merged_df['amount'] / merged_df['num_investors']
+    
+    investor_totals = merged_df.groupby(['investorName', 'investorId']).agg({
+        'dealId': 'count',
+        'estimated_amount': 'sum'
+    }).reset_index()
+    
+    investor_totals.columns = ['Investor Name', 'Investor ID', 'Number of Deals', 'Total Investment']
+    investor_totals['Total Investment (Millions)'] = (investor_totals['Total Investment'] / 1_000_000).round(1)
+    
+    top_investors = investor_totals.sort_values('Total Investment (Millions)', ascending=False).head(20)
+    
+    fig_top_investors = go.Figure()
+    
+    # Add the main bars
+    fig_top_investors.add_trace(go.Bar(
+        y=top_investors['Investor Name'],
+        x=top_investors["Total Investment (Millions)"],
+        orientation='h',
+        width=0.6,
+        marker_color='rgb(52, 152, 219)',
+        text=[f"${x:,.0f}M" for x in top_investors["Total Investment (Millions)"]],
+        textposition='outside',
+        textfont=dict(size=12)
+    ))
+    
+    # Add the continuous vertical line first
+    fig_top_investors.add_shape(
+        type="line",
+        x0=0,
+        x1=0,
+        y0=-0.5,
+        y1=len(top_investors)-0.5,
+        line=dict(color="rgb(128, 128, 128)", width=1)
+    )
+    
+    # Add vertical line segments and deal count numbers
+    for i, (_, row) in enumerate(top_investors.iterrows()):
+        # Add vertical line segment
+        fig_top_investors.add_shape(
+            type="line",
+            x0=0,
+            x1=0,
+            y0=i-0.25,
+            y1=i+0.25,
+            line=dict(color="rgb(128, 128, 128)", width=1)
+        )
+        # Add the deal count number
+        fig_top_investors.add_annotation(
+            x=0,
+            y=i,
+            text=str(int(row['Number of Deals'])),
+            showarrow=False,
+            xanchor='right',
+            xshift=-10,
+            font=dict(size=12)
+        )
+    
+    # Update layout with proper titles and formatting
+    fig_top_investors.update_layout(
+        title=dict(
+            text='Size of Total Rounds* ($M)',
+            x=0.5,
+            y=0.95,
+            xanchor='center',
+            yanchor='top',
+            font=dict(size=16)
+        ),
+        xaxis=dict(
+            showgrid=True,
+            gridcolor='rgba(128, 128, 128, 0.2)',
+            zeroline=False,
+            title='',
+            tickformat='$,.0f',
+            side='top'  # Move x-axis to top
+        ),
+        yaxis=dict(
+            title=dict(
+                text='# Rounds',
+                standoff=25,
+            ),
+            showgrid=False,
+            zeroline=False,
+            autorange="reversed",
+        ),
+        height=600,
+        margin=dict(l=250, r=150, t=50, b=20),
+        plot_bgcolor='white',
+        showlegend=False,
+        font=dict(size=12)
+    )
+    
+    st.plotly_chart(fig_top_investors, use_container_width=True)
+    create_download_buttons(fig_top_investors, "top_investors_analysis", width=1600, height=600)
+
+
 st.markdown(
     """
     <style>
@@ -255,6 +901,7 @@ if analysis is None:
     st.stop()
 
 st.sidebar.header("Navigation")
+
 page = st.sidebar.radio(
     "Choose a section",
     [
@@ -265,6 +912,7 @@ page = st.sidebar.radio(
         "Sectoral & Regional Analysis",
         "Predictive Insights",
         "Conclusions & Recommendations",
+        "Venture Capital Heat Map",
     ],
 )
 
@@ -280,25 +928,51 @@ if page == "Data Overview & Methodology":
     )
 
     st.subheader("Dataset Overview")
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric(
-            "Total Companies",
-            f"{len(analysis['raw_data']['companies']):,}",
-            "Active Startups",
-        )
-    with col2:
-        st.metric(
-            "Total Ecosystems", len(analysis["raw_data"]["ecosystems"]), "Regional Hubs"
-        )
-    with col3:
-        st.metric(
-            "Time Period",
-            f"{analysis['raw_data']['companies']['dateFounded'].dt.year.min()} - {analysis['raw_data']['companies']['dateFounded'].dt.year.max()}",
-            "Years Covered",
-        )
-    with col4:
-        st.metric("Data Sources", "Multiple", "Integrated Sources")
+    
+    # Calculate total metrics
+    total_investment = analysis['raw_data']['deals']['amount'].sum() / 1e9  # Convert to billions
+    total_deals = len(analysis['raw_data']['deals'])
+    total_companies = len(analysis['raw_data']['companies'])
+    total_ecosystems = len(analysis['raw_data']['ecosystems'])
+    year_range = f"{analysis['raw_data']['companies']['dateFounded'].dt.year.min()} - {analysis['raw_data']['companies']['dateFounded'].dt.year.max()}"
+    
+    # Create metrics table
+    metrics_df = pd.DataFrame({
+        'Metric': [
+            'Total Investment',
+            'Total Deals',
+            'Total Companies',
+            'Total Ecosystems',
+            'Time Period',
+            'Data Sources'
+        ],
+        'Value': [
+            f'${total_investment:.1f}B',
+            f'{total_deals:,}',
+            f'{total_companies:,}',
+            str(total_ecosystems),
+            year_range,
+            'Multiple'
+        ],
+        'Description': [
+            'Total capital invested',
+            'Investment rounds',
+            'Active startups',
+            'Regional hubs',
+            'Years covered',
+            'Integrated sources'
+        ]
+    })
+    
+    st.dataframe(
+        metrics_df,
+        hide_index=True,
+        column_config={
+            "Metric": st.column_config.TextColumn("Metric", width="medium"),
+            "Value": st.column_config.TextColumn("Value", width="medium"),
+            "Description": st.column_config.TextColumn("Description", width="medium")
+        }
+    )
 
     st.subheader("Analytical Approach")
     st.markdown(
@@ -761,11 +1435,9 @@ elif page == "Investor Demographics":
             st.markdown(
                 "Most active investors by deal count. Key ecosystem players and potential partners."
             )
-            top_investors = (
-                pd.DataFrame(analysis["investor_demographics"]["active_investors"])
-                .sort_values(by="dealId", ascending=False)
-                .head(20)
-            )
+            top_investors = pd.DataFrame(analysis["investor_demographics"]["active_investors"]) 
+            top_investors = top_investors.sort_values(by="dealId", ascending=False)
+            top_investors = top_investors.head(20)
             top_investors = top_investors.sort_values(by="dealId", ascending=True)
 
             fig_ = go.Figure()
@@ -964,6 +1636,9 @@ elif page == "Predictive Insights":
     )
 
     display_model_predictions()
+
+elif page == "Venture Capital Heat Map":
+    display_venture_capital_heatmap()
 
 else:
     st.header("📋 Conclusions & Business Implications")
