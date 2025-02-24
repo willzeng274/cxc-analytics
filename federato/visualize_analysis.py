@@ -27,11 +27,8 @@ def load_analysis_results(file_path='./federato/analysis_results.json'):
         return json.load(f)
 
 def create_device_analysis_plots(results):
-    st.header("📱 Device Analysis")
-    st.write("""
-    Analysis of user devices, platforms, and operating systems. This helps understand
-    the technical environment of our users and prioritize platform support.
-    """)
+    st.header("Device Analysis")
+    st.write("Analysis of user devices, platforms, and operating systems.")
     
     col1, col2, col3 = st.columns(3)
     
@@ -124,7 +121,7 @@ def create_device_analysis_plots(results):
     st.plotly_chart(fig, use_container_width=True)
 
 def create_geographic_analysis_plots(results):
-    st.header("🌍 Geographic Analysis")
+    st.header("Geographic Analysis")
     
     st.subheader("Country Distribution")
     
@@ -175,7 +172,7 @@ def create_geographic_analysis_plots(results):
         st.plotly_chart(fig_pie, use_container_width=True)
 
 def create_temporal_analysis_plots(results):
-    st.header("⏰ Temporal Analysis")
+    st.header("Temporal Analysis")
     
     st.subheader("Daily Event Counts")
     daily_counts = pd.DataFrame.from_dict(
@@ -266,7 +263,7 @@ def create_temporal_analysis_plots(results):
     st.plotly_chart(fig, use_container_width=True)
 
 def create_event_analysis_plots(results):
-    st.header("🎯 Event Analysis")
+    st.header("Event Analysis")
     
     st.subheader("Top 20 Event Types")
     event_types = pd.DataFrame.from_dict(
@@ -281,7 +278,7 @@ def create_event_analysis_plots(results):
     st.plotly_chart(fig, use_container_width=True)
 
 def create_user_session_analysis_plots(results):
-    st.header("👥 User & Session Analysis")
+    st.header("User & Session Analysis")
     
     col1, col2 = st.columns(2)
     
@@ -324,7 +321,7 @@ def create_user_session_analysis_plots(results):
         st.plotly_chart(fig, use_container_width=True)
 
 def create_event_sequence_plot(results):
-    st.header("🔄 Event Sequence Analysis")
+    st.header("Event Sequence Analysis")
     
     st.subheader("Most Common Event Sequences")
     event_pairs = pd.DataFrame.from_dict(
@@ -339,7 +336,7 @@ def create_event_sequence_plot(results):
     st.plotly_chart(fig, use_container_width=True)
 
 def create_user_journey_plots(results):
-    st.header("🛣️ User Journey Analysis")
+    st.header("User Journey Analysis")
     
     st.subheader("Top Event Sequences")
     
@@ -423,9 +420,113 @@ def create_user_journey_plots(results):
             ))
             fig.update_layout(title=f"{funnel_name.replace('_', ' ').title()} Funnel")
             st.plotly_chart(fig, use_container_width=True)
+    
+        st.subheader("Conversion Funnels")
+        
+        # Keep original funnels
+        original_funnels = results['journey_analysis']['conversion_funnels']
+        
+        # Add new funnels
+        additional_funnels = {
+            'rating_flow': {
+                'steps': [
+                    'account-lines::widget:render',
+                    'account-lines::configurable-table:render', 
+                    'account-lines:::view',
+                    'account-lines:::change-rating-click',
+                    'account-lines::templeton-docs:create-document-click'
+                ],
+                'user_counts': [428058, 257224, 108249, 9501, 2927],
+                'conversion_rates': [100, 60.1, 25.3, 2.2, 0.7]
+            },
+            'dashboard_navigation': {
+                'steps': [
+                    'dashboard:my-book:widget:render',
+                    'dashboard:my-book:layout:render',
+                    'dashboard:my-book::view',
+                    'dashboard:my-book::action-click',
+                    'dashboard:my-book:recent-actions-table:account-click'
+                ],
+                'user_counts': [99140, 37430, 37406, 5707, 916],
+                'conversion_rates': [100, 37.8, 37.7, 5.8, 0.9]
+            },
+            'construction_rating': {
+                'steps': [
+                    'account-lines:::view',
+                    'account-lines::construction-excess-rater:create-document-click',
+                    'account-lines::construction-excess-rater:save-new-quote-click',
+                    'account-lines::construction-excess-rater:modify-existing-quote-click'
+                ],
+                'user_counts': [108249, 104, 66, 64],
+                'conversion_rates': [100, 0.1, 0.06, 0.06]
+            }
+        }
+
+        # Combine original and new funnels
+        all_funnels = {**original_funnels, **additional_funnels}
+        results['journey_analysis']['conversion_funnels'] = all_funnels
+
+        # Create funnel visualizations
+        for funnel_name, funnel_data in results['journey_analysis']['conversion_funnels'].items():
+            st.write(f"**{funnel_name.replace('_', ' ').title()}**")
+            
+            funnel_df = pd.DataFrame({
+                'Step': [step.split(':')[-1].replace('-', ' ').title() for step in funnel_data['steps']],
+                'Users': funnel_data['user_counts'],
+                'Conversion Rate': [f"{rate:.1f}%" for rate in funnel_data['conversion_rates']]
+            })
+            
+            fig = go.Figure(go.Funnel(
+                y=funnel_df['Step'],
+                x=funnel_df['Users'],
+                textinfo="value+percent previous",
+                textposition="inside",
+                textfont=dict(size=12),
+                marker=dict(
+                    color=CUSTOM_COLORS[:len(funnel_df)],
+                    line=dict(width=2, color='white')
+                )
+            ))
+            
+            fig.update_layout(
+                title=dict(
+                    text=f"{funnel_name.replace('_', ' ').title()} Conversion",
+                    x=0.5,
+                    xanchor='center'
+                ),
+                width=None,
+                height=400,
+                margin=dict(t=60, l=120, r=20, b=20),
+                font=dict(size=12)
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Display funnel metrics in a table
+            st.write("Detailed Metrics:")
+            st.dataframe(funnel_df, use_container_width=True)
+            
+            # Calculate and display drop-off rates
+            if len(funnel_df) > 1:
+                drop_offs = []
+                for i in range(len(funnel_df) - 1):
+                    current = funnel_df['Users'].iloc[i]
+                    next_step = funnel_df['Users'].iloc[i + 1]
+                    drop_off = ((current - next_step) / current) * 100
+                    drop_offs.append({
+                        'From Step': funnel_df['Step'].iloc[i],
+                        'To Step': funnel_df['Step'].iloc[i + 1],
+                        'Drop-off Rate': f"{drop_off:.1f}%"
+                    })
+                
+                st.write("Drop-off Analysis:")
+                st.dataframe(pd.DataFrame(drop_offs), use_container_width=True)
+            
+            st.markdown("---")
+    
 
 def create_temporal_relationship_plots(results):
-    st.header("⏰ Temporal Relationships")
+    st.header("Temporal Relationships")
     
     st.subheader("Hourly Activity Patterns")
     hourly_patterns = results['temporal_relationships']['hourly_patterns']
@@ -608,7 +709,7 @@ def create_temporal_relationship_plots(results):
     st.plotly_chart(fig, use_container_width=True)
 
 def create_geographic_relationship_plots(results):
-    st.header("🌍 Geographic Relationships")
+    st.header("Geographic Relationships")
     
     st.subheader("Device Usage by Country")
     country_devices = results['geographic_relationships']['country_device_distribution']
@@ -672,12 +773,8 @@ def create_geographic_relationship_plots(results):
     st.plotly_chart(fig, use_container_width=True)
 
 def create_user_flow_sankey(results):
-    st.header("🔄 User Flow Analysis")
-    st.write("""
-    Visualization of user journeys through the application using Sankey diagrams.
-    Shows the most common event sequences of different lengths (2-5 events).
-    Thicker flows indicate more frequent sequences.
-    """)
+    st.header("User Flow Analysis")
+    st.write("Sankey diagram visualization of user journeys showing event sequence frequencies.")
     
     try:
         sequences = results.get('journey_analysis', {}).get('event_flows', {})
@@ -794,13 +891,10 @@ def create_user_flow_sankey(results):
         st.write("Please check if the event sequence data is in the correct format.")
 
 def create_temporal_heatmap(results):
-    st.header("🕒 Temporal Patterns")
-    st.write("""
-    Detailed analysis of user activity patterns across different time periods.
-    Includes hourly, daily, weekly, and monthly patterns to identify peak usage times.
-    """)
+    st.header("Temporal Patterns")
+    st.write("Time-based analysis of user activity patterns.")
     
-    st.subheader("📊 Hourly Activity Patterns")
+    st.subheader("Hourly Activity Patterns")
     col1, col2 = st.columns(2)
     
     with col1:
@@ -864,7 +958,7 @@ def create_temporal_heatmap(results):
                     color_discrete_sequence=['#2ecc71'])
         st.plotly_chart(fig, use_container_width=True)
     
-    st.subheader("📅 Weekly Activity Patterns")
+    st.subheader("Weekly Activity Patterns")
     
     weekday_hour_matrix = results['temporal_relationships']['weekday_patterns']['weekday_hour_matrix']
     weekday_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -916,7 +1010,7 @@ def create_temporal_heatmap(results):
     )
     st.plotly_chart(fig, use_container_width=True)
     
-    st.subheader("📊 Peak Activity Days")
+    st.subheader("Peak Activity Days")
     st.write("**Top 10 Most Active Days**")
     
     top_days = results['temporal_relationships']['daily_patterns']['top_10_days']
@@ -977,7 +1071,7 @@ def create_temporal_heatmap(results):
     with col3:
         st.metric("Daily Events Std Dev", f"{daily_stats['std']:,.0f}")
     
-    st.subheader("🎯 Peak Activity Summary")
+    st.subheader("Peak Activity Summary")
     peak_activity = results['temporal_relationships']['peak_activity']
     
     st.write(f"**Overall Peak Day:** {peak_activity['overall_peak_day']} with {peak_activity['overall_peak_day_count']:,} events")
@@ -993,15 +1087,12 @@ def create_temporal_heatmap(results):
         })
     
     weekday_summary_df = pd.DataFrame(weekday_summary)
-    st.write("**Peak Hours by Weekday**")
+    st.write("Peak Hours by Weekday")
     st.dataframe(weekday_summary_df, use_container_width=True)
 
 def create_user_segments_analysis(results):
-    st.header("👥 User Segments")
-    st.write("""
-    Analysis of user segments based on behavior patterns.
-    Identifies distinct user groups and their characteristics.
-    """)
+    st.header("User Segments")
+    st.write("Behavioral segmentation analysis of users.")
     
     segments = results['journey_analysis']['user_segments']
     if not segments:
@@ -1046,11 +1137,8 @@ def create_user_segments_analysis(results):
     st.plotly_chart(fig, use_container_width=True)
 
 def create_geographic_insights(results):
-    st.header("🌍 Geographic Insights")
-    st.write("""
-    Combined analysis of geographic patterns including device usage,
-    user behavior, and regional preferences.
-    """)
+    st.header("Geographic Insights")
+    st.write("Geographic distribution analysis of users and device usage.")
     
     country_data = pd.DataFrame({
         'Country': results['geographic_analysis']['country_distribution'].keys(),
@@ -1070,16 +1158,12 @@ def create_geographic_insights(results):
 def main():
     st.set_page_config(
         page_title="User Analytics Dashboard",
-        page_icon="📊",
+        page_icon=None,
         layout="wide"
     )
     
-    st.title("📊 Enhanced User Analytics Dashboard")
-    st.write("""
-    Interactive visualization of user behavior and analytics data.
-    This dashboard provides insights into user patterns, device usage,
-    geographic distribution, and temporal trends.
-    """)
+    st.title("User Analytics Dashboard")
+    st.write("User behavior and analytics visualization dashboard")
     
     try:
         results = load_analysis_results()
@@ -1126,7 +1210,7 @@ def main():
         st.sidebar.metric("Active Sessions", f"{results['basic_stats']['unique_sessions']:,}")
         
         if main_section == "Overview":
-            st.write(f"### 📈 Data Range: {results['basic_stats']['date_range']['start']} to {results['basic_stats']['date_range']['end']}")
+            st.write(f"### Date Range: {results['basic_stats']['date_range']['start']} to {results['basic_stats']['date_range']['end']}")
             create_device_analysis_plots(results)
             create_geographic_analysis_plots(results)
             create_temporal_analysis_plots(results)
@@ -1156,7 +1240,7 @@ def main():
             
         elif main_section == "Technical Environment":
             if selected_subsection == "Device Distribution":
-                st.header("📱 Device Distribution")
+                st.header("Device Distribution")
                 device_df = pd.DataFrame({
                     'Device': results['device_analysis']['device_distribution'].keys(),
                     'Count': results['device_analysis']['device_distribution'].values()
@@ -1176,7 +1260,7 @@ def main():
                     st.plotly_chart(fig, use_container_width=True)
                 
             elif selected_subsection == "Operating Systems":
-                st.header("💻 Operating Systems")
+                st.header("Operating Systems")
                 
                 col1, col2 = st.columns(2)
                 with col1:
