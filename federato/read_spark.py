@@ -8,6 +8,7 @@ import time
 import glob
 import psutil
 import os
+from pyspark.sql.window import Window
 
 # Set up logging
 logging.basicConfig(
@@ -48,7 +49,6 @@ class Timer:
 
 def create_spark_session():
     """Create and configure Spark session."""
-    # Calculate memory settings based on available system memory
     available_memory = psutil.virtual_memory().available
     executor_memory = int(available_memory * 0.8 / 1024 / 1024)  # 80% of available memory in MB
     
@@ -84,91 +84,154 @@ def get_schema():
         StructField("os_name", StringType(), True)
     ])
 
-def load_and_process_data(spark):
-    """Load and process CSV files using Spark."""
-    with Timer("Data Loading"):
-        try:
-            # Get list of CSV files
-            csv_pattern = 'federato/2024/*_csv/*.csv'
-            csv_files = glob.glob(csv_pattern)
+def explore_dataset(df):
+    """Explore and log dataset characteristics."""
+    with Timer("Dataset Exploration"):
+        # Basic counts
+        logger.info("\n=== Dataset Overview ===")
+        total_rows = df.count()
+        logger.info(f"Total rows: {total_rows:,}")
+        
+        # Column statistics
+        for col in df.columns:
+            null_count = df.filter(F.col(col).isNull()).count()
+            distinct_count = df.select(col).distinct().count()
+            null_percentage = (null_count / total_rows) * 100
+            logger.info(f"\nColumn: {col}")
+            logger.info(f"- Distinct values: {distinct_count:,}")
+            logger.info(f"- Null values: {null_count:,} ({null_percentage:.2f}%)")
             
-            if not csv_files:
-                logger.error(f"No CSV files found matching pattern: {csv_pattern}")
-                return None
-            
-            logger.info(f"Found {len(csv_files)} CSV files to process")
-            
-            # Read CSV files with schema
-            df = (spark.read.format("csv")
-                 .option("header", "true")
-                 .schema(get_schema())
-                 .load(csv_pattern))
-            
-            # Early filtering and processing
-            df = (df.filter(~F.col("device_family").isin(["iOS", "Android"]))  # Remove mobile
-                 .filter(F.col("user_id").isNotNull())  # Remove null users
-                 .withColumn("hour", F.hour("client_event_time"))
-                 .withColumn("day", F.date_format("client_event_time", "EEEE"))
-                 .withColumn("month", F.month("client_event_time"))
-                 .cache())  # Cache the filtered dataset
-            
-            return df
-            
-        except Exception as e:
-            logger.error(f"Error loading data: {str(e)}")
-            raise
+            if distinct_count < 100:  # Only show distribution for categorical columns
+                logger.info("- Value distribution:")
+                df.groupBy(col).count().orderBy(F.desc("count")).show(5, truncate=False)
 
-def analyze_data(df):
-    """Run analysis on the Spark DataFrame."""
-    with Timer("Data Analysis"):
-        try:
-            # Basic Statistics
-            logger.info("\n=== Basic Statistics ===")
-            basic_stats = df.agg(
-                F.count("*").alias("total_events"),
-                F.countDistinct("user_id").alias("unique_users"),
-                F.countDistinct("session_id").alias("unique_sessions")
-            ).collect()[0]
-            
-            logger.info(f"Total events: {basic_stats['total_events']:,}")
-            logger.info(f"Unique users: {basic_stats['unique_users']:,}")
-            logger.info(f"Unique sessions: {basic_stats['unique_sessions']:,}")
-            
-            # Event Types Distribution
-            logger.info("\n=== Top 10 Event Types ===")
-            df.groupBy("event_type") \
-              .count() \
-              .orderBy(F.col("count").desc()) \
-              .limit(10) \
-              .show(truncate=False)
-            
-            # Geographic Distribution
-            logger.info("\n=== Top 5 Countries ===")
-            df.groupBy("country") \
-              .count() \
-              .orderBy(F.col("count").desc()) \
-              .limit(5) \
-              .show()
-            
-            # OS Distribution
-            logger.info("\n=== OS Distribution ===")
-            total_events = df.count()
-            (df.groupBy("os_name")
-             .count()
-             .withColumn("percentage", F.round((F.col("count") / total_events) * 100, 2))
-             .orderBy(F.col("count").desc())
-             .show())
-            
-            # Hourly Distribution
-            logger.info("\n=== Hourly Distribution ===")
-            (df.groupBy("hour")
-             .count()
-             .orderBy("hour")
-             .show(24))
+def analyze_temporal_patterns(df):
+    """Analyze temporal patterns in the data."""
+    with Timer("Temporal Analysis"):
+        logger.info("\n=== Temporal Patterns ===")
+        
+        # Add time-based columns
+        df = df.withColumn("hour", F.hour("client_event_time"))
+        df = df.withColumn("day", F.dayofweek("client_event_time"))
+        df = df.withColumn("month", F.month("client_event_time"))
+        
+        # Hourly patterns
+        logger.info("\nHourly Event Distribution:")
+        df.groupBy("hour") \
+          .agg(F.count("*").alias("events"),
+               F.countDistinct("session_id").alias("unique_sessions")) \
+          .orderBy("hour") \
+          .show(24)
+        
+        # Daily patterns
+        logger.info("\nDaily Event Distribution:")
+        df.groupBy("day") \
+          .agg(F.count("*").alias("events"),
+               F.countDistinct("session_id").alias("unique_sessions")) \
+          .orderBy("day") \
+          .show()
 
-        except Exception as e:
-            logger.error(f"Error in analysis: {str(e)}")
-            raise
+def analyze_user_behavior(df):
+    """Analyze user behavior patterns."""
+    with Timer("User Behavior Analysis"):
+        logger.info("\n=== User Behavior Analysis ===")
+        
+        # Session statistics
+        session_stats = df.groupBy("session_id").agg(
+            F.count("*").alias("events_per_session"),
+            F.countDistinct("event_type").alias("unique_events"),
+            F.min("client_event_time").alias("session_start"),
+            F.max("client_event_time").alias("session_end")
+        )
+        
+        session_stats = session_stats.withColumn(
+            "session_duration_minutes",
+            F.round(F.unix_timestamp("session_end") - F.unix_timestamp("session_start")) / 60
+        )
+        
+        logger.info("\nSession Duration Statistics:")
+        session_stats.select("session_duration_minutes") \
+                    .summary("count", "min", "25%", "75%", "max") \
+                    .show()
+        
+        logger.info("\nEvents per Session Statistics:")
+        session_stats.select("events_per_session") \
+                    .summary("count", "min", "25%", "75%", "max") \
+                    .show()
+
+def analyze_event_sequences(df):
+    """Analyze event sequences and transitions."""
+    with Timer("Event Sequence Analysis"):
+        logger.info("\n=== Event Sequence Analysis ===")
+        
+        # Create window for next event
+        window_spec = Window.partitionBy("session_id").orderBy("client_event_time")
+        
+        df_with_next = df.withColumn(
+            "next_event",
+            F.lead("event_type").over(window_spec)
+        )
+        
+        # Analyze event transitions
+        logger.info("\nTop Event Transitions:")
+        df_with_next.filter(F.col("next_event").isNotNull()) \
+                    .groupBy("event_type", "next_event") \
+                    .count() \
+                    .orderBy(F.desc("count")) \
+                    .show(10, truncate=False)
+        
+        # First events in sessions
+        logger.info("\nMost Common Session Start Events:")
+        df.withColumn(
+            "is_first_event",
+            F.row_number().over(Window.partitionBy("session_id").orderBy("client_event_time")) == 1
+        ).filter("is_first_event") \
+         .groupBy("event_type") \
+         .count() \
+         .orderBy(F.desc("count")) \
+         .show(5)
+
+def analyze_geographic_patterns(df):
+    """Analyze geographic distribution and patterns."""
+    with Timer("Geographic Analysis"):
+        logger.info("\n=== Geographic Analysis ===")
+        
+        # Country distribution
+        logger.info("\nEvents by Country:")
+        df.groupBy("country") \
+          .agg(F.count("*").alias("events"),
+               F.countDistinct("session_id").alias("sessions"),
+               F.countDistinct("user_id").alias("users")) \
+          .orderBy(F.desc("events")) \
+          .show(10)
+        
+        # Region distribution for top countries
+        logger.info("\nTop Regions by Country:")
+        df.groupBy("country", "region") \
+          .count() \
+          .orderBy(F.desc("count")) \
+          .show(10)
+
+def analyze_device_usage(df):
+    """Analyze device and platform usage patterns."""
+    with Timer("Device Usage Analysis"):
+        logger.info("\n=== Device Usage Analysis ===")
+        
+        # Device family distribution
+        logger.info("\nDevice Family Distribution:")
+        df.groupBy("device_family") \
+          .agg(F.count("*").alias("events"),
+               F.countDistinct("session_id").alias("sessions")) \
+          .orderBy(F.desc("events")) \
+          .show()
+        
+        # OS distribution
+        logger.info("\nOS Distribution:")
+        df.groupBy("os_name") \
+          .agg(F.count("*").alias("events"),
+               F.countDistinct("session_id").alias("sessions")) \
+          .orderBy(F.desc("events")) \
+          .show()
 
 def main():
     """Main function to orchestrate the analysis."""
@@ -180,13 +243,35 @@ def main():
         # Create Spark session
         spark = create_spark_session()
         
-        # Load and process data
-        df = load_and_process_data(spark)
-        if df is None:
-            return
+        # Load data
+        with Timer("Data Loading"):
+            csv_pattern = 'federato/2024/*_csv/*.csv'
+            csv_files = glob.glob(csv_pattern)
+            
+            if not csv_files:
+                logger.error(f"No CSV files found matching pattern: {csv_pattern}")
+                return
+            
+            logger.info(f"Found {len(csv_files)} CSV files to process")
+            
+            # Read CSV files with schema
+            df = (spark.read.format("csv")
+                 .option("header", "true")
+                 .schema(get_schema())
+                 .load(csv_pattern))
+            
+            # Early filtering
+            df = (df.filter(~F.col("device_family").isin(["iOS", "Android"]))
+                 .filter(F.col("user_id").isNotNull())
+                 .cache())
         
-        # Run analysis
-        analyze_data(df)
+        # Run analyses
+        explore_dataset(df)
+        analyze_temporal_patterns(df)
+        analyze_user_behavior(df)
+        analyze_event_sequences(df)
+        analyze_geographic_patterns(df)
+        analyze_device_usage(df)
         
         # Log overall execution time
         total_time = time.time() - total_start_time
