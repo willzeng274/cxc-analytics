@@ -39,6 +39,7 @@ def create_dual_axis_figure(x, y1, y2, name1, name2, title, y1_title, y2_title):
 
 @st.cache_data
 def create_download_buttons(fig, filename_prefix, width=None, height=None):
+    return
     """Create download buttons for a plotly figure"""
     img_buffer = io.BytesIO()
     
@@ -245,6 +246,13 @@ def display_venture_capital_heatmap():
     
     merged_df['year'] = pd.to_datetime(merged_df['date']).dt.year
     
+    # Get total deal count by sector
+    sector_deal_counts = merged_df.groupby('primaryTag').size().sort_values(ascending=False)
+    top_5_sectors = sector_deal_counts.head(5).index.tolist()
+    
+    # Filter for only top 5 sectors by deal count
+    merged_df = merged_df[merged_df['primaryTag'].isin(top_5_sectors)]
+    
     sector_stats = merged_df.groupby(['primaryTag', 'year']).agg({
         'amount': ['sum', 'count']
     }).reset_index()
@@ -252,7 +260,7 @@ def display_venture_capital_heatmap():
     sector_growth = {}
     for sector in sector_stats['primaryTag'].unique():
         sector_data = sector_stats[sector_stats['primaryTag'] == sector]
-        total_investment = sector_data[('amount', 'sum')].sum()
+        total_deals = sector_data[('amount', 'count')].sum()
         
         growth = 0.0
         
@@ -263,18 +271,19 @@ def display_venture_capital_heatmap():
             prev_data = sector_data[sector_data['year'] == latest_year - 1]
             
             if not latest_data.empty and not prev_data.empty:
-                latest_amount = latest_data[('amount', 'sum')].values[0]
-                prev_amount = prev_data[('amount', 'sum')].values[0]
+                latest_deals = latest_data[('amount', 'count')].values[0]
+                prev_deals = prev_data[('amount', 'count')].values[0]
                 
-                if prev_amount > 0:
-                    growth = ((latest_amount - prev_amount) / prev_amount) * 100
+                if prev_deals > 0:
+                    growth = ((latest_deals - prev_deals) / prev_deals) * 100
         
         sector_growth[sector] = {
             'growth': growth,
-            'total_investment': total_investment
+            'total_deals': total_deals
         }
     
-    top_sectors = sorted(sector_growth.items(), key=lambda x: x[1]['total_investment'], reverse=True)[:5]
+    # Sort sectors by total number of deals
+    top_sectors = sorted(sector_growth.items(), key=lambda x: x[1]['total_deals'], reverse=True)
     top_sector_names = [sector[0] for sector in top_sectors]
     
     fig_sectors = go.Figure()
@@ -283,7 +292,7 @@ def display_venture_capital_heatmap():
     line_colors = ['rgb(46, 204, 113)', 'rgb(231, 76, 60)', 'rgb(52, 152, 219)', 
                   'rgb(155, 89, 182)', 'rgb(241, 196, 15)']
     
-    years = list(range(2020, 2025))
+    years = list(range(2019, 2025))
     x_positions = []
     x_ticks = []
     x_labels = []
@@ -317,7 +326,7 @@ def display_venture_capital_heatmap():
             opacity=0.6 + 0.1 * (year - 2020),
             text=[f'${round(x, 1)}M' for x in year_data],
             textposition='outside',
-            textfont=dict(size=10, color='black'),
+            textfont=dict(size=12, color='rgb(20, 20, 20)'),
             textangle=270,
             cliponaxis=False,
             constraintext='none'
@@ -354,7 +363,7 @@ def display_venture_capital_heatmap():
 
     fig_sectors.update_layout(
         title=dict(
-            text='TOP 5 SECTORS: INVESTMENT & DEAL VOLUME TRENDS<br>(2020-2024)',
+            text='TOP 5 SECTORS: INVESTMENT & DEAL VOLUME TRENDS<br>(2019-2024)',
             font=dict(size=24, color='rgb(2, 33, 105)'),
             x=0.5,
             y=0.97
@@ -370,17 +379,25 @@ def display_venture_capital_heatmap():
             x=1
         ),
         yaxis=dict(
-            title='Investment Amount ($ Millions)',
+            title=dict(
+                text='Investment Amount ($ Millions)',
+                font=dict(size=14, color='rgb(50, 50, 50)')
+            ),
             gridcolor='rgba(128, 128, 128, 0.2)',
             side='left',
-            range=[0, max_investment * 1.1]
+            range=[0, max_investment * 1.1],
+            tickfont=dict(size=14, color='rgb(20, 20, 20)')
         ),
         yaxis2=dict(
-            title='Number of Deals',
+            title=dict(
+                text='Number of Deals',
+                font=dict(size=14, color='rgb(50, 50, 50)')
+            ),
             overlaying='y',
             side='right',
             showgrid=False,
-            range=[0, max_deals * 1.1]
+            range=[0, max_deals * 1.1],
+            tickfont=dict(size=14, color='rgb(20, 20, 20)')
         ),
         plot_bgcolor='white',
         xaxis=dict(
@@ -389,7 +406,7 @@ def display_venture_capital_heatmap():
             tickmode='array',
             tickvals=x_ticks,
             ticktext=x_labels,
-            tickfont=dict(size=11),
+            tickfont=dict(size=14, color='rgb(20, 20, 20)'),
             domain=[0, 1]
         ),
         margin=dict(t=170, b=80, l=80, r=80)
@@ -771,7 +788,7 @@ def display_venture_capital_heatmap():
         marker_color='rgb(52, 152, 219)',
         text=[f"${x:,.0f}M" for x in top_investors["Total Investment (Millions)"]],
         textposition='outside',
-        textfont=dict(size=12)
+        textfont=dict(size=14)
     ))
     
     fig_top_investors.add_shape(
@@ -799,7 +816,7 @@ def display_venture_capital_heatmap():
             showarrow=False,
             xanchor='right',
             xshift=-10,
-            font=dict(size=12)
+            font=dict(size=14, color='rgb(50, 50, 50)')
         )
     
     fig_top_investors.update_layout(
@@ -809,7 +826,7 @@ def display_venture_capital_heatmap():
             y=0.95,
             xanchor='center',
             yanchor='top',
-            font=dict(size=16)
+            font=dict(size=20, color='rgb(30, 30, 30)')
         ),
         xaxis=dict(
             showgrid=True,
@@ -817,22 +834,25 @@ def display_venture_capital_heatmap():
             zeroline=False,
             title='',
             tickformat='$,.0f',
-            side='top'  # Move x-axis to top
+            side='top',
+            tickfont=dict(size=14, color='rgb(50, 50, 50)')
         ),
         yaxis=dict(
             title=dict(
                 text='# Rounds',
                 standoff=25,
+                font=dict(size=16, color='rgb(30, 30, 30)')
             ),
             showgrid=False,
             zeroline=False,
             autorange="reversed",
+            tickfont=dict(size=14, color='rgb(50, 50, 50)')
         ),
         height=600,
         margin=dict(l=250, r=150, t=50, b=20),
         plot_bgcolor='white',
         showlegend=False,
-        font=dict(size=12)
+        font=dict(size=14, color='rgb(50, 50, 50)')
     )
     
     st.plotly_chart(fig_top_investors, use_container_width=True)
@@ -1341,25 +1361,95 @@ def display_company_age_analysis():
     merged_df['dateFounded'] = pd.to_datetime(merged_df['dateFounded'])
     merged_df['date'] = pd.to_datetime(merged_df['date'])
     merged_df['company_age'] = (merged_df['date'] - merged_df['dateFounded']).dt.days / 365.25  # Age in years
-    
-    # Create age categories
+
+    # Create age categories for heatmap
     age_bins = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, float('inf')]
     age_labels = ['0-1', '1-2', '2-3', '3-4', '4-5', '5-6', '6-7', '7-8', '8-9', '9-10', '10+']
     merged_df['age_category'] = pd.cut(merged_df['company_age'], bins=age_bins, labels=age_labels)
+
+    # Create funding series heatmap
+    st.subheader("🎯 Company Age vs Funding Series Distribution")
     
-    # Define stage categories
-    stage_mapping = {
-        'Pre-Seed': 'Seed',
-        'Seed': 'Seed',
-        'Series A': 'Early Stage',
-        'Series B': 'Early Stage',
-        'Series C': 'Late Stage',
-        'Series D': 'Late Stage',
-        'Series E': 'Late Stage',
-        'Series F': 'Late Stage',
-        'Series G': 'Late Stage'
-    }
-    merged_df['stage_category'] = merged_df['roundType'].map(stage_mapping)
+    # Define series order
+    series_order = ['Pre-Seed', 'Seed', 'Series A', 'Series B', 'Series C', 'Series D', 'Series E', 'Series F', 'Series G']
+    
+    # Create cross-tabulation of age categories and funding series
+    age_series_dist = pd.crosstab(
+        merged_df['age_category'],
+        merged_df['roundType']
+    )[series_order]  # Reorder columns
+    
+    # Create heatmap
+    fig_heatmap = go.Figure(data=go.Heatmap(
+        z=age_series_dist.values,
+        x=age_series_dist.columns,
+        y=age_series_dist.index,
+        colorscale='Viridis',
+        text=age_series_dist.values.astype(int),
+        texttemplate="%{text}",
+        textfont={"size": 12},
+        hoverongaps=False,
+    ))
+    
+    fig_heatmap.update_layout(
+        title='Company Age vs Funding Series Distribution',
+        xaxis_title="Funding Series",
+        yaxis_title="Company Age (Years)",
+        height=600,
+        template='plotly_white',
+        xaxis_tickangle=-45
+    )
+    
+    st.plotly_chart(fig_heatmap, use_container_width=True)
+    create_download_buttons(fig_heatmap, "age_series_heatmap")
+
+    # Create median age by funding series visualization
+    st.subheader("📊 Median Company Age by Funding Series")
+    
+    # Calculate median age for each funding series
+    series_age = merged_df.groupby('roundType')['company_age'].agg(['median', 'count']).reset_index()
+    
+    # Filter and sort the data
+    series_age = series_age[series_age['roundType'].isin(series_order)]
+    series_age = series_age.set_index('roundType').reindex(series_order).reset_index()
+    
+    # Create the bar chart
+    fig_series_age = go.Figure()
+    
+    # Add bars for median age
+    fig_series_age.add_trace(go.Bar(
+        x=series_age['roundType'],
+        y=series_age['median'],
+        marker_color='rgba(52, 152, 219, 0.8)',
+        text=[f'{x:.1f} yrs<br>({n:,} deals)' for x, n in zip(series_age['median'], series_age['count'])],
+        textposition='auto',
+        hovertemplate='Median Age: %{y:.1f} years<br>Number of Deals: %{text}<extra></extra>'
+    ))
+    
+    # Update layout
+    fig_series_age.update_layout(
+        title=dict(
+            text='MEDIAN COMPANY AGE AT FUNDING SERIES',
+            font=dict(size=16),
+            x=0.5,
+            xanchor='center'
+        ),
+        xaxis=dict(
+            title='Funding Series',
+            tickangle=-45,
+            tickfont=dict(size=12)
+        ),
+        yaxis=dict(
+            title='Median Age (Years)',
+            gridcolor='rgba(128, 128, 128, 0.2)'
+        ),
+        template='plotly_white',
+        height=500,
+        margin=dict(t=100, b=100, l=50, r=50)
+    )
+    
+    st.plotly_chart(fig_series_age, use_container_width=True)
+    create_download_buttons(fig_series_age, "median_age_by_series")
     
     # Create age distribution visualization
     st.subheader("📊 Company Age Distribution")
@@ -1391,6 +1481,20 @@ def display_company_age_analysis():
         create_download_buttons(fig_age, "age_distribution")
     
     with col2:
+        # Define stage categories
+        stage_mapping = {
+            'Pre-Seed': 'Seed',
+            'Seed': 'Seed',
+            'Series A': 'Early Stage',
+            'Series B': 'Early Stage',
+            'Series C': 'Late Stage',
+            'Series D': 'Late Stage',
+            'Series E': 'Late Stage',
+            'Series F': 'Late Stage',
+            'Series G': 'Late Stage'
+        }
+        merged_df['stage_category'] = merged_df['roundType'].map(stage_mapping)
+        
         # Age distribution by funding stage
         stage_age = pd.crosstab(merged_df['age_category'], merged_df['stage_category'])
         
@@ -1554,8 +1658,8 @@ def display_stage_sector_analysis():
     # Add stage category
     merged_df['stage_category'] = merged_df['roundType'].map(stage_mapping)
     
-    # Get top 5 sectors by total deal count
-    top_sectors = merged_df.groupby('primaryTag').size().nlargest(5).index
+    # Get top 5 sectors by total investment amount
+    top_sectors = merged_df.groupby('primaryTag')['amount'].sum().nlargest(5).index
     
     # Filter for top sectors and years 2019-2024
     sector_data = merged_df[
@@ -1564,7 +1668,7 @@ def display_stage_sector_analysis():
     ]
     
     # Create yearly funding series analysis
-    st.subheader("📈 Yearly Investment by Funding Stage")
+    st.subheader("📈 Yearly Investment Distribution by Funding Stage")
     
     # Define colors for stages
     colors = {
@@ -1581,45 +1685,46 @@ def display_stage_sector_analysis():
         horizontal_spacing=0.05
     )
     
-    # Calculate maximum y value for consistent scaling
-    max_deals = 0
-    for year in range(2019, 2025):
-        year_data = sector_data[sector_data['year'] == year]
-        stage_sector_counts = pd.crosstab(year_data['primaryTag'], year_data['stage_category'])
-        max_deals = max(max_deals, stage_sector_counts.sum(axis=1).max())
-    
-    # Round max_deals to nearest 10 for clean y-axis
-    max_deals = ((max_deals // 10) + 1) * 10
-    
     # Create subplot for each year
     for i, year in enumerate(range(2019, 2025)):
         row = i // 3 + 1
         col = i % 3 + 1
         
         year_data = sector_data[sector_data['year'] == year]
+        total_year_investment = year_data['amount'].sum()
         
-        # Create crosstab for this year
-        stage_sector_counts = pd.crosstab(
-            year_data['primaryTag'],
-            year_data['stage_category']
-        ).fillna(0)
+        # Calculate investment percentages by stage and sector
+        stage_sector_amounts = pd.pivot_table(
+            year_data,
+            values='amount',
+            index='primaryTag',
+            columns='stage_category',
+            aggfunc='sum',
+            fill_value=0
+        )
         
-        # Sort sectors by total deals for this year
-        stage_sector_counts['total'] = stage_sector_counts.sum(axis=1)
-        stage_sector_counts = stage_sector_counts.sort_values('total', ascending=False)  # Changed to descending
-        stage_sector_counts = stage_sector_counts.drop('total', axis=1)
+        # Convert to percentages of total year investment
+        stage_sector_percentages = (stage_sector_amounts / total_year_investment * 100).round(1)
+        
+        # Sort sectors by total percentage for this year
+        stage_sector_percentages['total'] = stage_sector_percentages.sum(axis=1)
+        stage_sector_percentages = stage_sector_percentages.sort_values('total', ascending=False)
+        stage_sector_percentages = stage_sector_percentages.drop('total', axis=1)
         
         # Create stacked bars
         for j, stage in enumerate(['Seed', 'Early', 'Late']):
-            if stage in stage_sector_counts.columns:
+            if stage in stage_sector_percentages.columns:
                 fig.add_trace(
                     go.Bar(
                         name=stage,
-                        x=stage_sector_counts.index,  # Swapped x and y
-                        y=stage_sector_counts[stage],  # Swapped x and y
+                        x=stage_sector_percentages.index,
+                        y=stage_sector_percentages[stage],
                         marker_color=colors[stage],
-                        showlegend=(i == 0),  # Show legend only for first subplot
+                        showlegend=(i == 0),
                         legendgroup=stage,
+                        hovertemplate='%{x}<br>' +
+                                    f'{stage}: %{{y:.1f}}%<br>' +
+                                    '<extra></extra>'
                     ),
                     row=row,
                     col=col
@@ -1635,14 +1740,14 @@ def display_stage_sector_analysis():
             showline=True,
             linewidth=1,
             linecolor='rgba(128, 128, 128, 0.2)',
-            tickangle=45,  # Added angle for better readability
+            tickangle=45,
             row=row,
             col=col
         )
         
         fig.update_yaxes(
             title=None,
-            range=[0, max_deals],  # Moved range to y-axis
+            range=[0, 35],  # Set range to 0-60 for percentages
             showgrid=True,
             gridwidth=1,
             gridcolor='rgba(128, 128, 128, 0.2)',
@@ -1652,11 +1757,13 @@ def display_stage_sector_analysis():
             showline=True,
             linewidth=1,
             linecolor='rgba(128, 128, 128, 0.2)',
+            ticksuffix='%',  # Add percentage symbol to ticks
             row=row,
             col=col
         )
     
     # Update layout
+    # Update layout for all subplots
     fig.update_layout(
         title=dict(
             text='FUNDING STAGE DISTRIBUTION BY SECTOR AND YEAR',
@@ -1674,13 +1781,30 @@ def display_stage_sector_analysis():
             font=dict(size=12),
             traceorder='normal'
         ),
-        height=900,  # Increased from 800 to 900
+        height=900,
         barmode='stack',
         template='plotly_white',
         plot_bgcolor='white',
         margin=dict(t=150, b=80, l=50, r=50)
     )
-    
+
+    # Update all x-axes and y-axes fonts for all subplots (3 rows x 2 columns)
+    for row in range(1, 4):  # 3 rows
+        for col in range(1, 4):  # 2 columns
+            fig.update_xaxes(
+                tickfont=dict(size=14, color='rgb(50, 50, 50)'),
+                title_font=dict(size=16, color='rgb(50, 50, 50)'),
+                row=row,
+                col=col
+            )
+            fig.update_yaxes(
+                tickfont=dict(size=14, color='rgb(50, 50, 50)'),
+                title_font=dict(size=16, color='rgb(50, 50, 50)'),
+                row=row,
+                col=col
+            
+            
+            )
     st.plotly_chart(fig, use_container_width=True)
     create_download_buttons(fig, "yearly_funding_series", width=1600, height=900)
 
@@ -1823,6 +1947,1151 @@ def display_ecosystem_sector_trends():
         # Add a divider between ecosystems
         st.markdown("---")
 
+@st.cache_data
+def display_ecosystem_funding_distribution():
+    """Display pie chart of venture capital funding distribution across ecosystems."""
+    st.header("🥧 Ecosystem Funding Distribution")
+    st.markdown(
+        """
+        <div class='insight-box'>
+        Distribution of venture capital funding across different Canadian startup ecosystems.
+        Shows relative investment concentration and regional funding patterns.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # Get the necessary data
+    companies_df = pd.DataFrame(analysis['raw_data']['companies'])
+    deals_df = pd.DataFrame(analysis['raw_data']['deals'])
+    
+    # Merge deals with companies to get ecosystem information
+    merged_df = deals_df.merge(
+        companies_df[['id', 'ecosystemName']], 
+        left_on='companyId', 
+        right_on='id', 
+        suffixes=('_deal', '')
+    )
+    
+    # Calculate total funding by ecosystem
+    ecosystem_funding = merged_df.groupby('ecosystemName')['amount'].sum().sort_values(ascending=False)
+    
+    # Convert to millions for better readability
+    ecosystem_funding = ecosystem_funding / 1e6
+    
+    # Calculate percentages
+    total_funding = ecosystem_funding.sum()
+    ecosystem_percentages = (ecosystem_funding / total_funding * 100).round(1)
+    
+    # Create color scale
+    colors = px.colors.qualitative.Set3[:len(ecosystem_funding)]
+    
+    # Create the pie chart
+    fig = go.Figure(data=[go.Pie(
+        labels=ecosystem_funding.index,
+        values=ecosystem_funding.values,
+        hole=0.4,
+        marker=dict(colors=colors),
+        textinfo='label+percent',
+        textposition='outside',
+        texttemplate='%{label}<br>%{percent}',
+        hovertemplate='<b>%{label}</b><br>' +
+                      'Investment: $%{value:.1f}M<br>' +
+                      'Share: %{percent}<extra></extra>',
+        textfont=dict(size=16, color='rgb(20, 20, 20)')
+    )])
+    
+    # Update layout
+    fig.update_layout(
+        title=dict(
+            text='VENTURE CAPITAL FUNDING DISTRIBUTION BY ECOSYSTEM',
+            font=dict(size=20, color='rgb(20, 20, 20)'),
+            x=0.5,
+            xanchor='center'
+        ),
+        annotations=[dict(
+            text=f'Total Investment<br>${total_funding/1000:.1f}B',
+            x=0.5,
+            y=0.5,
+            font_size=18,
+            font=dict(color='rgb(20, 20, 20)'),
+            showarrow=False
+        )],
+        template='plotly_white',
+        height=800,  # Increased height to accommodate lower legend
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=-0.2,  # Moved legend lower
+            xanchor="center",
+            x=0.5,
+            font=dict(size=14, color='rgb(20, 20, 20)')
+        ),
+        margin=dict(b=50)  # Added bottom margin to ensure legend visibility
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+    create_download_buttons(fig, "ecosystem_funding_distribution")
+    
+    # Display summary statistics
+    st.subheader("📊 Key Insights")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("#### Top 5 Ecosystems by Investment")
+        top_5 = ecosystem_percentages.head()
+        for ecosystem, percentage in top_5.items():
+            funding = ecosystem_funding[ecosystem]
+            st.markdown(f"- **{ecosystem}**: ${funding:.1f}M ({percentage:.1f}%)")
+    
+    with col2:
+        st.markdown("#### Investment Concentration")
+        top_3_pct = ecosystem_percentages.head(3).sum()
+        top_5_pct = ecosystem_percentages.head(5).sum()
+        st.markdown(f"- Top 3 ecosystems: {top_3_pct:.1f}% of total funding")
+        st.markdown(f"- Top 5 ecosystems: {top_5_pct:.1f}% of total funding")
+        st.markdown(f"- Other ecosystems: {100-top_5_pct:.1f}% of total funding")
+
+@st.cache_data
+def display_stage_sector_deal_analysis():
+    """Display analysis of deal counts across sectors and stages."""
+    st.header("📊 Deal Count Analysis by Sector and Stage")
+    st.markdown(
+        """
+        <div class='insight-box'>
+        Analysis of deal volume distribution across different sectors and funding stages.
+        Shows where activity is concentrated in terms of number of transactions.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # Get the necessary data
+    companies_df = pd.DataFrame(analysis['raw_data']['companies'])
+    deals_df = pd.DataFrame(analysis['raw_data']['deals'])
+    
+    # Merge deals with companies
+    merged_df = deals_df.merge(
+        companies_df[['id', 'primaryTag']], 
+        left_on='companyId', 
+        right_on='id', 
+        suffixes=('_deal', '')
+    )
+    
+    # Convert dates and add year
+    merged_df['date'] = pd.to_datetime(merged_df['date'])
+    merged_df['year'] = merged_df['date'].dt.year
+    
+    # Filter data before 2025
+    merged_df = merged_df[merged_df['year'] < 2025]
+    
+    # Define stage mapping
+    stage_mapping = {
+        'Pre-Seed': 'Seed',
+        'Seed': 'Seed',
+        'Series A': 'Early Stage',
+        'Series B': 'Early Stage',
+        'Series C': 'Later Stage',
+        'Series D': 'Later Stage',
+        'Series E': 'Later Stage',
+        'Series F': 'Later Stage',
+        'Series G': 'Later Stage'
+    }
+    
+    # Add stage category
+    merged_df['stage_category'] = merged_df['roundType'].map(stage_mapping)
+    
+    # Get top sectors by total number of deals
+    top_sectors = merged_df.groupby('primaryTag').size().nlargest(10).index
+    
+    # Filter for top sectors
+    sector_data = merged_df[merged_df['primaryTag'].isin(top_sectors)]
+    
+    st.subheader("📈 Yearly Deal Distribution by Sector")
+    
+    # Create yearly deal count analysis
+    yearly_deals = pd.pivot_table(
+        sector_data,
+        values='id_deal',
+        index='year',
+        columns='primaryTag',
+        aggfunc='count',
+        fill_value=0
+    )
+    
+    # Create stacked bar chart for yearly distribution
+    fig_yearly = go.Figure()
+    
+    colors = px.colors.qualitative.Set3
+    
+    for i, sector in enumerate(yearly_deals.columns):
+        fig_yearly.add_trace(go.Bar(
+            name=sector,
+            x=yearly_deals.index,
+            y=yearly_deals[sector],
+            marker_color=colors[i % len(colors)]
+        ))
+    
+    fig_yearly.update_layout(
+        title=dict(
+            text='YEARLY DEAL COUNT BY SECTOR',
+            font=dict(size=16),
+            x=0.5,
+            xanchor='center'
+        ),
+        barmode='stack',
+        template='plotly_white',
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        ),
+        xaxis=dict(
+            title='Year',
+            tickmode='array',
+            ticktext=[str(year) for year in range(2019, 2025)],
+            tickvals=list(range(2019, 2025))
+        ),
+        yaxis=dict(
+            title='Number of Deals',
+            gridcolor='rgba(128, 128, 128, 0.2)'
+        ),
+        height=600,
+        margin=dict(t=100, b=50, l=50, r=50)
+    )
+    
+    st.plotly_chart(fig_yearly, use_container_width=True)
+    create_download_buttons(fig_yearly, "yearly_deal_distribution")
+    
+    st.subheader("🎯 Deal Count by Stage and Sector")
+    
+    # Create stage-sector deal count matrix
+    stage_sector_deals = pd.crosstab(
+        sector_data['primaryTag'],
+        sector_data['stage_category']
+    )
+    
+    # Create heatmap for stage-sector distribution
+    fig_heatmap = go.Figure(data=go.Heatmap(
+        z=stage_sector_deals.values,
+        x=stage_sector_deals.columns,
+        y=stage_sector_deals.index,
+        colorscale='Viridis',
+        text=stage_sector_deals.values,
+        texttemplate="%{text}",
+        textfont={"size": 12},
+        hoverongaps=False
+    ))
+    
+    fig_heatmap.update_layout(
+        title=dict(
+            text='DEAL COUNT DISTRIBUTION: SECTORS VS STAGES',
+            font=dict(size=16),
+            x=0.5,
+            xanchor='center'
+        ),
+        xaxis=dict(
+            title='Funding Stage',
+            tickfont=dict(size=12)
+        ),
+        yaxis=dict(
+            title='Sector',
+            tickfont=dict(size=12)
+        ),
+        height=600,
+        template='plotly_white',
+        margin=dict(t=100, b=50, l=150, r=50)
+    )
+    
+    st.plotly_chart(fig_heatmap, use_container_width=True)
+    create_download_buttons(fig_heatmap, "stage_sector_deal_distribution")
+    
+    st.subheader("📊 Stage Progression by Sector")
+    
+    # Calculate stage percentages for each sector
+    stage_pcts = stage_sector_deals.div(stage_sector_deals.sum(axis=1), axis=0) * 100
+    
+    # Create percentage distribution chart
+    fig_stages = go.Figure()
+    
+    stage_colors = {
+        'Seed': 'rgb(158, 202, 225)',
+        'Early Stage': 'rgb(66, 146, 198)',
+        'Later Stage': 'rgb(8, 81, 156)'
+    }
+    
+    for stage in stage_pcts.columns:
+        fig_stages.add_trace(go.Bar(
+            name=stage,
+            x=stage_pcts.index,
+            y=stage_pcts[stage],
+            marker_color=stage_colors.get(stage, 'rgb(128, 128, 128)')
+        ))
+    
+    fig_stages.update_layout(
+        title=dict(
+            text='STAGE DISTRIBUTION BY SECTOR (% OF DEALS)',
+            font=dict(size=16),
+            x=0.5,
+            xanchor='center'
+        ),
+        barmode='stack',
+        template='plotly_white',
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        ),
+        xaxis=dict(
+            title='Sector',
+            tickangle=-45,
+            tickfont=dict(size=12)
+        ),
+        yaxis=dict(
+            title='Percentage of Deals',
+            gridcolor='rgba(128, 128, 128, 0.2)',
+            ticksuffix='%'
+        ),
+        height=600,
+        margin=dict(t=100, b=150, l=50, r=50)
+    )
+    
+    st.plotly_chart(fig_stages, use_container_width=True)
+    create_download_buttons(fig_stages, "stage_progression_by_sector")
+    
+    # Add summary statistics
+    st.subheader("📈 Key Insights")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("#### Top Sectors by Deal Volume")
+        sector_totals = stage_sector_deals.sum(axis=1).sort_values(ascending=False)
+        for sector, count in sector_totals.head(5).items():
+            st.markdown(f"- **{sector}**: {count:,} deals")
+    
+    with col2:
+        st.markdown("#### Stage Distribution")
+        stage_totals = stage_sector_deals.sum().sort_values(ascending=False)
+        total_deals = stage_totals.sum()
+        for stage, count in stage_totals.items():
+            percentage = (count / total_deals) * 100
+            st.markdown(f"- **{stage}**: {count:,} deals ({percentage:.1f}%)")
+
+@st.cache_data
+def display_stage_sector_deal_count_analysis():
+    """Display analysis of funding stages vs sectors over time based on deal counts."""
+    st.header("📊 Deal Count Analysis: Stages vs Sectors")
+    st.markdown(
+        """
+        <div class='insight-box'>
+        Analysis of sector maturity through funding stages based on number of deals, showing which sectors are maturing and where future growth opportunities may lie.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # Get the necessary data
+    companies_df = pd.DataFrame(analysis['raw_data']['companies'])
+    deals_df = pd.DataFrame(analysis['raw_data']['deals'])
+    
+    # Merge deals with companies
+    merged_df = deals_df.merge(
+        companies_df[['id', 'primaryTag']], 
+        left_on='companyId', 
+        right_on='id', 
+        suffixes=('_deal', '')
+    )
+    
+    # Convert dates and add year
+    merged_df['date'] = pd.to_datetime(merged_df['date'])
+    merged_df['year'] = merged_df['date'].dt.year
+    
+    # Filter data before 2025
+    merged_df = merged_df[merged_df['year'] < 2025]
+    
+    # Define stage mapping
+    stage_mapping = {
+        'Pre-Seed': 'Seed',
+        'Seed': 'Seed',
+        'Series A': 'Early Stage',
+        'Series B': 'Early Stage',
+        'Series C': 'Later Stage',
+        'Series D': 'Later Stage',
+        'Series E': 'Later Stage',
+        'Series F': 'Later Stage',
+        'Series G': 'Later Stage'
+    }
+    
+    # Add stage category
+    merged_df['stage_category'] = merged_df['roundType'].map(stage_mapping)
+    
+    # Get top sectors by total number of deals
+    top_sectors = merged_df.groupby('primaryTag').size().nlargest(5).index
+    
+    # Filter for top sectors
+    sector_data = merged_df[merged_df['primaryTag'].isin(top_sectors)]
+    
+    # Create subplots
+    fig = make_subplots(
+        rows=2, cols=3,
+        subplot_titles=['2019', '2020', '2021', '2022', '2023', '2024'],
+        vertical_spacing=0.2,
+        horizontal_spacing=0.05
+    )
+    
+    # Create subplot for each year
+    for i, year in enumerate(range(2019, 2025)):
+        row = i // 3 + 1
+        col = i % 3 + 1
+        
+        year_data = sector_data[sector_data['year'] == year]
+        total_year_deals = len(year_data)
+        
+        # Calculate deal percentages by stage and sector
+        stage_sector_counts = pd.pivot_table(
+            year_data,
+            values='id_deal',
+            index='primaryTag',
+            columns='stage_category',
+            aggfunc='count',
+            fill_value=0
+        )
+        
+        # Convert to percentages of total year deals
+        stage_sector_percentages = (stage_sector_counts / total_year_deals * 100).round(1)
+        
+        # Sort sectors by total percentage for this year
+        stage_sector_percentages['total'] = stage_sector_percentages.sum(axis=1)
+        stage_sector_percentages = stage_sector_percentages.sort_values('total', ascending=False)
+        stage_sector_percentages = stage_sector_percentages.drop('total', axis=1)
+        
+        # Create stacked bars
+        colors = {
+            'Seed': 'rgb(158, 202, 225)',
+            'Early Stage': 'rgb(66, 146, 198)',
+            'Later Stage': 'rgb(8, 81, 156)'
+        }
+        
+        for j, stage in enumerate(['Seed', 'Early Stage', 'Later Stage']):
+            if stage in stage_sector_percentages.columns:
+                fig.add_trace(
+                    go.Bar(
+                        name=stage,
+                        x=stage_sector_percentages.index,
+                        y=stage_sector_percentages[stage],
+                        marker_color=colors[stage],
+                        showlegend=(i == 0),
+                        legendgroup=stage,
+                        hovertemplate='%{x}<br>' +
+                                    f'{stage}: %{{y:.1f}}%<br>' +
+                                    '<extra></extra>'
+                    ),
+                    row=row,
+                    col=col
+                )
+    
+        # Update axes for this subplot
+        fig.update_xaxes(
+            title=None,
+            showgrid=False,
+            zeroline=True,
+            zerolinecolor='rgba(128, 128, 128, 0.2)',
+            zerolinewidth=1,
+            showline=True,
+            linewidth=1,
+            linecolor='rgba(128, 128, 128, 0.2)',
+            tickangle=45,
+            row=row,
+            col=col
+        )
+        
+        fig.update_yaxes(
+            title=None,
+            range=[0, 35],  # Set range to 0-100 for percentages
+            showgrid=True,
+            gridwidth=1,
+            gridcolor='rgba(128, 128, 128, 0.2)',
+            zeroline=True,
+            zerolinecolor='rgba(128, 128, 128, 0.2)',
+            zerolinewidth=1,
+            showline=True,
+            linewidth=1,
+            linecolor='rgba(128, 128, 128, 0.2)',
+            ticksuffix='%',  # Add percentage symbol to ticks
+            row=row,
+            col=col
+        )
+    
+    # Update layout
+    fig.update_layout(
+        title=dict(
+            text='DEAL COUNT DISTRIBUTION BY SECTOR AND STAGE',
+            font=dict(size=24, color='rgb(2, 33, 105)'),
+            x=0.5,
+            y=0.95
+        ),
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1,
+            font=dict(size=12),
+            traceorder='normal'
+        ),
+        height=900,
+        barmode='stack',
+        template='plotly_white',
+        plot_bgcolor='white',
+        margin=dict(t=150, b=80, l=50, r=50)
+    )
+
+    # Update all x-axes and y-axes fonts
+    for row in range(1, 3):  # 2 rows
+        for col in range(1, 4):  # 3 columns
+            fig.update_xaxes(
+                tickfont=dict(size=14, color='rgb(50, 50, 50)'),
+                title_font=dict(size=16, color='rgb(50, 50, 50)'),
+                row=row,
+                col=col
+            )
+            fig.update_yaxes(
+                tickfont=dict(size=14, color='rgb(50, 50, 50)'),
+                title_font=dict(size=16, color='rgb(50, 50, 50)'),
+                row=row,
+                col=col
+            )
+    
+    st.plotly_chart(fig, use_container_width=True)
+    create_download_buttons(fig, "yearly_stage_sector_deals", width=1600, height=900)
+
+@st.cache_data
+def display_median_age_by_series():
+    """Display average company age by funding series."""
+    st.subheader("📊 Average Company Age by Funding Series")
+    
+    # Get the necessary data
+    companies_df = pd.DataFrame(analysis['raw_data']['companies'])
+    deals_df = pd.DataFrame(analysis['raw_data']['deals'])
+    
+    # Merge deals with companies
+    merged_df = deals_df.merge(
+        companies_df[['id', 'dateFounded']], 
+        left_on='companyId', 
+        right_on='id', 
+        suffixes=('_deal', '')
+    )
+    
+    # Convert dates and calculate age
+    merged_df['dateFounded'] = pd.to_datetime(merged_df['dateFounded'])
+    merged_df['date'] = pd.to_datetime(merged_df['date'])
+    merged_df['company_age'] = (merged_df['date'] - merged_df['dateFounded']).dt.days / 365.25  # Age in years
+    
+    # Calculate average age for each funding series
+    series_age = merged_df.groupby('roundType')['company_age'].agg(['mean', 'count']).reset_index()
+    
+    # Define the order of funding series
+    series_order = ['Pre-Seed', 'Seed', 'Series A', 'Series B', 'Series C', 'Series D', 'Series E', 'Series F', 'Series G']
+    
+    # Filter and sort the data
+    series_age = series_age[series_age['roundType'].isin(series_order)]
+    series_age = series_age.set_index('roundType').reindex(series_order).reset_index()
+    
+    # Create the bar chart
+    fig = go.Figure()
+    
+    # Add bars for average age
+    fig.add_trace(go.Bar(
+        x=series_age['roundType'],
+        y=series_age['mean'],
+        marker_color='rgba(52, 152, 219, 0.8)',
+        text=[f'{x:.1f} yrs<br>({n:,} deals)' for x, n in zip(series_age['mean'], series_age['count'])],
+        textposition='auto',
+        hovertemplate='Average Age: %{y:.1f} years<br>Number of Deals: %{text}<extra></extra>'
+    ))
+    
+    # Update layout
+    fig.update_layout(
+        title=dict(
+            text='AVERAGE COMPANY AGE AT FUNDING SERIES',
+            font=dict(size=16),
+            x=0.5,
+            xanchor='center'
+        ),
+        xaxis=dict(
+            title='Funding Series',
+            tickangle=-45,
+            tickfont=dict(size=12)
+        ),
+        yaxis=dict(
+            title='Average Age (Years)',
+            gridcolor='rgba(128, 128, 128, 0.2)'
+        ),
+        template='plotly_white',
+        height=500,
+        margin=dict(t=100, b=100, l=50, r=50)
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+    create_download_buttons(fig, "average_age_by_series")
+
+@st.cache_data
+def display_bottom_sectors_analysis():
+    """Display analysis of the bottom 5 sectors by deal count and investment."""
+    st.header("📊 Bottom Sectors Analysis")
+    st.markdown(
+        """
+        <div class='insight-box'>
+        Analysis of the least active sectors in terms of deal count and investment volume. 
+        Understanding these sectors can reveal untapped opportunities or areas needing more support.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # Get the necessary data
+    companies_df = pd.DataFrame(analysis['raw_data']['companies'])
+    deals_df = pd.DataFrame(analysis['raw_data']['deals'])
+    
+    # Merge deals with companies
+    merged_df = deals_df.merge(
+        companies_df[['id', 'primaryTag']], 
+        left_on='companyId', 
+        right_on='id', 
+        suffixes=('_deal', '')
+    )
+    
+    # Convert dates and add year
+    merged_df['date'] = pd.to_datetime(merged_df['date'])
+    merged_df['year'] = merged_df['date'].dt.year
+    
+    # Filter data before 2025
+    merged_df = merged_df[merged_df['year'] < 2025]
+    
+    # Get bottom 5 sectors by deal count
+    bottom_sectors = merged_df.groupby('primaryTag').size().nsmallest(5)
+    
+    # Create deal count visualization
+    fig_deals = go.Figure()
+    
+    fig_deals.add_trace(
+        go.Bar(
+            y=bottom_sectors.index,
+            x=bottom_sectors.values,
+            orientation='h',
+            marker_color='rgba(231, 76, 60, 0.8)',  # Red color to differentiate from top sectors
+            text=bottom_sectors.values,
+            textposition='auto',
+            hovertemplate='<b>%{y}</b><br>' +
+                         'Deals: %{x}<br>' +
+                         '<extra></extra>'
+        )
+    )
+    
+    fig_deals.update_layout(
+        title=dict(
+            text='BOTTOM 5 SECTORS BY DEAL COUNT',
+            font=dict(size=16),
+            x=0.5,
+            xanchor='center'
+        ),
+        xaxis=dict(
+            title=dict(
+                text='Number of Deals',
+                font=dict(size=14, color='rgb(50, 50, 50)')
+            ),
+            tickfont=dict(size=12, color='rgb(50, 50, 50)')
+        ),
+        yaxis=dict(
+            title=dict(
+                text='Sector',
+                font=dict(size=14, color='rgb(50, 50, 50)')
+            ),
+            tickfont=dict(size=12, color='rgb(50, 50, 50)')
+        ),
+        height=400,
+        template='plotly_white',
+        margin=dict(t=100, b=50, l=200, r=50)  # Increased left margin for sector names
+    )
+    
+    st.plotly_chart(fig_deals, use_container_width=True)
+    create_download_buttons(fig_deals, "bottom_sectors_deal_count")
+    
+    # Calculate investment amounts for bottom sectors
+    sector_investments = merged_df[merged_df['primaryTag'].isin(bottom_sectors.index)].groupby('primaryTag')['amount'].agg(['sum', 'mean'])
+    sector_investments['sum'] = sector_investments['sum'] / 1e6  # Convert to millions
+    sector_investments['mean'] = sector_investments['mean'] / 1e6  # Convert to millions
+    sector_investments = sector_investments.sort_values('sum')
+    
+    # Create investment amount visualization
+    fig_investment = go.Figure()
+    
+    fig_investment.add_trace(
+        go.Bar(
+            y=sector_investments.index,
+            x=sector_investments['sum'],
+            orientation='h',
+            marker_color='rgba(52, 152, 219, 0.8)',
+            name='Total Investment',
+            text=[f'${x:.1f}M' for x in sector_investments['sum']],
+            textposition='auto',
+            hovertemplate='<b>%{y}</b><br>' +
+                         'Total Investment: $%{x:.1f}M<br>' +
+                         '<extra></extra>'
+        )
+    )
+    
+    fig_investment.update_layout(
+        title=dict(
+            text='INVESTMENT IN BOTTOM 5 SECTORS',
+            font=dict(size=16),
+            x=0.5,
+            xanchor='center'
+        ),
+        xaxis=dict(
+            title=dict(
+                text='Total Investment ($ Millions)',
+                font=dict(size=14, color='rgb(50, 50, 50)')
+            ),
+            tickfont=dict(size=12, color='rgb(50, 50, 50)')
+        ),
+        yaxis=dict(
+            title=dict(
+                text='Sector',
+                font=dict(size=14, color='rgb(50, 50, 50)')
+            ),
+            tickfont=dict(size=12, color='rgb(50, 50, 50)')
+        ),
+        height=400,
+        template='plotly_white',
+        margin=dict(t=100, b=50, l=200, r=50)  # Increased left margin for sector names
+    )
+    
+    st.plotly_chart(fig_investment, use_container_width=True)
+    create_download_buttons(fig_investment, "bottom_sectors_investment")
+    
+    # Year-over-year trends for bottom sectors
+    yearly_trends = pd.pivot_table(
+        merged_df[merged_df['primaryTag'].isin(bottom_sectors.index)],
+        values='id_deal',
+        index='year',
+        columns='primaryTag',
+        aggfunc='count',
+        fill_value=0
+    )
+    
+    # Create trend visualization
+    fig_trends = go.Figure()
+    
+    colors = px.colors.qualitative.Set3[:len(bottom_sectors)]
+    
+    for i, sector in enumerate(yearly_trends.columns):
+        fig_trends.add_trace(
+            go.Scatter(
+                x=yearly_trends.index,
+                y=yearly_trends[sector],
+                name=sector,
+                mode='lines+markers',
+                line=dict(color=colors[i], width=2),
+                marker=dict(size=8),
+                hovertemplate='<b>%{x}</b><br>' +
+                             f'{sector}: %{{y}}<br>' +
+                             '<extra></extra>'
+            )
+        )
+    
+    fig_trends.update_layout(
+        title=dict(
+            text='YEARLY TRENDS IN BOTTOM 5 SECTORS',
+            font=dict(size=16),
+            x=0.5,
+            xanchor='center'
+        ),
+        xaxis=dict(
+            title=dict(
+                text='Year',
+                font=dict(size=14, color='rgb(50, 50, 50)')
+            ),
+            tickfont=dict(size=12, color='rgb(50, 50, 50)')
+        ),
+        yaxis=dict(
+            title=dict(
+                text='Number of Deals',
+                font=dict(size=14, color='rgb(50, 50, 50)')
+            ),
+            tickfont=dict(size=12, color='rgb(50, 50, 50)')
+        ),
+        height=500,
+        template='plotly_white',
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        ),
+        margin=dict(t=100, b=50, l=50, r=50)
+    )
+    
+    st.plotly_chart(fig_trends, use_container_width=True)
+    create_download_buttons(fig_trends, "bottom_sectors_trends")
+    
+    # Add insights section
+    st.subheader("🔍 Key Insights")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("#### Deal Activity")
+        total_deals = merged_df['id_deal'].count()
+        bottom_deals = bottom_sectors.sum()
+        bottom_pct = (bottom_deals / total_deals) * 100
+        
+        st.markdown(f"""
+        - Bottom 5 sectors account for only {bottom_pct:.1f}% of total deals
+        - Average of {bottom_deals/5:.1f} deals per sector
+        - Most inactive sector: {bottom_sectors.index[0]} ({bottom_sectors.values[0]} deals)
+        """)
+    
+    with col2:
+        st.markdown("#### Investment Patterns")
+        avg_deal_size = sector_investments['mean'].mean()
+        max_deal_size = sector_investments['mean'].max()
+        max_deal_sector = sector_investments['mean'].idxmax()
+        
+        st.markdown(f"""
+        - Average deal size: ${avg_deal_size:.1f}M
+        - Highest average deal size: ${max_deal_size:.1f}M ({max_deal_sector})
+        - Total investment in bottom 5 sectors: ${sector_investments['sum'].sum():.1f}M
+        """)
+
+@st.cache_data
+def display_ecosystem_statistical_analysis():
+    """Display detailed statistical analysis of venture capital ecosystems."""
+    st.header("📊 Ecosystem Statistical Analysis")
+    st.markdown(
+        """
+        <div class='insight-box'>
+        In-depth statistical analysis of venture capital ecosystems, examining correlations between various factors
+        such as funding series, company age, deal sizes, and ecosystem maturity.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # Get the necessary data
+    companies_df = pd.DataFrame(analysis['raw_data']['companies'])
+    deals_df = pd.DataFrame(analysis['raw_data']['deals'])
+    
+    # Merge deals with companies
+    merged_df = deals_df.merge(
+        companies_df[['id', 'ecosystemName', 'age', 'primaryTag']], 
+        left_on='companyId', 
+        right_on='id', 
+        suffixes=('_deal', '')
+    )
+    
+    # Calculate ecosystem-level metrics
+    ecosystem_metrics = merged_df.groupby('ecosystemName').agg({
+        'amount': ['mean', 'median', 'std', 'count'],
+        'age': 'mean',
+    }).round(2)
+    
+    ecosystem_metrics.columns = [
+        'avg_deal_size', 'median_deal_size', 'deal_size_std', 
+        'deal_count', 'avg_company_age'
+    ]
+    
+    # Calculate additional metrics
+    ecosystem_metrics['total_funding'] = merged_df.groupby('ecosystemName')['amount'].sum() / 1e6  # Convert to millions
+    ecosystem_metrics['funding_per_year'] = ecosystem_metrics['total_funding'] / ecosystem_metrics['avg_company_age']
+    
+    # Sort by total funding
+    ecosystem_metrics = ecosystem_metrics.sort_values('total_funding', ascending=False)
+    
+    # Display correlation matrix
+    st.subheader("🔄 Ecosystem Metric Correlations")
+    
+    correlation_matrix = ecosystem_metrics.corr()
+    
+    # Create correlation heatmap
+    fig_corr = go.Figure(data=go.Heatmap(
+        z=correlation_matrix,
+        x=correlation_matrix.columns,
+        y=correlation_matrix.columns,
+        text=correlation_matrix.round(2),
+        texttemplate='%{text}',
+        textfont={"size": 10},
+        hoverongaps=False,
+        colorscale='RdBu'
+    ))
+    
+    fig_corr.update_layout(
+        title='Correlation Matrix of Ecosystem Metrics',
+        height=600,
+        width=800
+    )
+    
+    st.plotly_chart(fig_corr, use_container_width=True)
+    create_download_buttons(fig_corr, "ecosystem_correlations")
+    
+    # Display key insights from correlations
+    st.markdown("#### 📈 Key Correlation Insights")
+    correlations = correlation_matrix['total_funding'].sort_values(ascending=False)
+    
+    st.markdown("**Strongest positive correlations with total funding:**")
+    for metric, corr in correlations[1:4].items():  # Skip self-correlation
+        st.markdown(f"- {metric}: {corr:.2f}")
+    
+    st.markdown("**Strongest negative correlations with total funding:**")
+    for metric, corr in correlations[-3:].items():
+        st.markdown(f"- {metric}: {corr:.2f}")
+    
+    # Analyze funding series distribution
+    st.subheader("📊 Funding Series Distribution by Ecosystem")
+    
+    # Calculate funding series distribution for each ecosystem based on deal counts
+    series_dist = pd.crosstab(
+        merged_df['ecosystemName'], 
+        merged_df['roundType'],
+        values=merged_df['id_deal'],
+        aggfunc='count'
+    ).fillna(0)
+    
+    # Convert to percentages
+    series_dist_pct = series_dist.div(series_dist.sum(axis=1), axis=0) * 100
+    
+    # Create stacked bar chart
+    fig_series = go.Figure()
+    
+    for series in series_dist_pct.columns:
+        fig_series.add_trace(go.Bar(
+            name=series,
+            x=series_dist_pct.index,
+            y=series_dist_pct[series],
+            text=series_dist_pct[series].round(1).astype(str) + '%',
+            textposition='inside',
+            hovertemplate=
+            '<b>%{x}</b><br>' +
+            f'{series}: %{{y:.1f}}%<br>' +
+            '<extra></extra>'
+        ))
+    
+    fig_series.update_layout(
+        title=dict(
+            text='FUNDING SERIES DISTRIBUTION BY ECOSYSTEM (% OF DEALS)',
+            font=dict(size=16),
+            x=0.5,
+            xanchor='center'
+        ),
+        barmode='stack',
+        showlegend=True,
+        height=600,
+        xaxis=dict(
+            title='Ecosystem',
+            tickangle=-45
+        ),
+        yaxis=dict(
+            title='Percentage of Deals',
+            ticksuffix='%'
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
+    )
+    st.plotly_chart(fig_series, use_container_width=True)
+    create_download_buttons(fig_series, "ecosystem_series_distribution")
+    
+    # Analyze ecosystem maturity
+    st.subheader("🎯 Ecosystem Maturity Analysis")
+    
+    # Calculate maturity metrics
+    ecosystem_metrics['late_stage_ratio'] = series_dist[['Series C', 'Series D', 'Series E', 'Series F', 'Series G']].sum(axis=1) / series_dist.sum(axis=1) * 100
+    ecosystem_metrics['early_stage_ratio'] = series_dist[['Seed', 'Series A', 'Series B']].sum(axis=1) / series_dist.sum(axis=1) * 100
+    
+    # Create scatter plot of ecosystem maturity
+    fig_maturity = go.Figure()
+    
+    fig_maturity.add_trace(go.Scatter(
+        x=ecosystem_metrics['avg_company_age'],
+        y=ecosystem_metrics['late_stage_ratio'],
+        mode='markers+text',
+        text=ecosystem_metrics.index,
+        textposition="top center",
+        marker=dict(
+            size=ecosystem_metrics['total_funding'] / ecosystem_metrics['total_funding'].max() * 50,
+            color=ecosystem_metrics['early_stage_ratio'],
+            colorscale='Viridis',
+            showscale=True,
+            colorbar=dict(title='Early Stage Ratio (%)')
+        ),
+        hovertemplate=
+        '<b>%{text}</b><br>' +
+        'Avg Company Age: %{x:.1f} years<br>' +
+        'Late Stage Ratio: %{y:.1f}%<br>' +
+        '<extra></extra>'
+    ))
+    
+    fig_maturity.update_layout(
+        title='Ecosystem Maturity Analysis',
+        xaxis_title='Average Company Age (Years)',
+        yaxis_title='Late Stage Ratio (%)',
+        height=600
+    )
+    
+    st.plotly_chart(fig_maturity, use_container_width=True)
+    create_download_buttons(fig_maturity, "ecosystem_maturity")
+    
+    # Add analysis of average age by funding series across ecosystems
+    st.subheader("🎯 Average Company Age by Funding Series")
+    
+    # Filter for relevant funding series
+    relevant_series = ['Pre-Seed', 'Seed', 'Series A', 'Series B', 'Series C']
+    series_age_data = merged_df[merged_df['roundType'].isin(relevant_series)]
+    
+    # Calculate average age for each ecosystem and funding series
+    series_age_avg = series_age_data.groupby(['ecosystemName', 'roundType'])['age'].mean().reset_index()
+    
+    # Create box plot
+    fig_age = go.Figure()
+    
+    for series_type in relevant_series:
+        series_data = series_age_avg[series_age_avg['roundType'] == series_type]
+        
+        fig_age.add_trace(go.Box(
+            y=series_data['age'],
+            x=series_data['ecosystemName'],
+            name=series_type,
+            boxpoints='all',
+            jitter=0.3,
+            pointpos=-1.8
+        ))
+    
+    fig_age.update_layout(
+        title='Average Company Age by Funding Series Across Ecosystems',
+        xaxis_title='Ecosystem',
+        yaxis_title='Company Age (Years)',
+        boxmode='group',
+        height=600,
+        showlegend=True,
+        xaxis_tickangle=-45,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
+    )
+    
+    st.plotly_chart(fig_age, use_container_width=True)
+    create_download_buttons(fig_age, "ecosystem_age_series")
+    
+    # Add statistical summary for age by series
+    st.markdown("#### 📊 Age Statistics by Funding Series")
+    
+    series_stats = series_age_data.groupby('roundType')['age'].agg([
+        ('Mean Age', 'mean'),
+        ('Median Age', 'median'),
+        ('Min Age', 'min'),
+        ('Max Age', 'max'),
+        ('Std Dev', 'std')
+    ]).round(2)
+    
+    # Sort by mean age
+    series_stats = series_stats.sort_values('Mean Age')
+    
+    # Display statistics
+    st.dataframe(series_stats)
+    
+    # Add key insights about age progression
+    st.markdown("#### 🔍 Key Insights")
+    
+    # Calculate average age progression
+    progression = series_stats['Mean Age'].diff().mean()
+    
+    st.markdown(f"""
+    - Average age progression between funding series: {progression:.1f} years
+    - Youngest companies on average: {series_stats.index[0]} ({series_stats['Mean Age'].iloc[0]:.1f} years)
+    - Oldest companies on average: {series_stats.index[-1]} ({series_stats['Mean Age'].iloc[-1]:.1f} years)
+    - Largest age variation: {series_stats['Std Dev'].idxmax()} (std dev: {series_stats['Std Dev'].max():.1f} years)
+    """)
+    
+    # Display statistical summary
+    st.subheader("📈 Statistical Summary")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("#### Ecosystem Size Metrics")
+        size_metrics = pd.DataFrame({
+            'Metric': [
+                'Total Funding (M)',
+                'Avg Deal Size (M)',
+                'Deal Count',
+                'Funding per Year (M)'
+            ],
+            'Mean': [
+                ecosystem_metrics['total_funding'].mean(),
+                ecosystem_metrics['avg_deal_size'].mean() / 1e6,
+                ecosystem_metrics['deal_count'].mean(),
+                ecosystem_metrics['funding_per_year'].mean()
+            ],
+            'Median': [
+                ecosystem_metrics['total_funding'].median(),
+                ecosystem_metrics['median_deal_size'].median() / 1e6,
+                ecosystem_metrics['deal_count'].median(),
+                ecosystem_metrics['funding_per_year'].median()
+            ],
+            'Std Dev': [
+                ecosystem_metrics['total_funding'].std(),
+                ecosystem_metrics['deal_size_std'].mean() / 1e6,
+                ecosystem_metrics['deal_count'].std(),
+                ecosystem_metrics['funding_per_year'].std()
+            ]
+        })
+        st.dataframe(size_metrics.round(2))
+    
+    with col2:
+        st.markdown("#### Maturity Metrics")
+        maturity_metrics = pd.DataFrame({
+            'Metric': [
+                'Avg Company Age',
+                'Early Stage Ratio (%)',
+                'Late Stage Ratio (%)'
+            ],
+            'Mean': [
+                ecosystem_metrics['avg_company_age'].mean(),
+                ecosystem_metrics['early_stage_ratio'].mean(),
+                ecosystem_metrics['late_stage_ratio'].mean()
+            ],
+            'Median': [
+                ecosystem_metrics['avg_company_age'].median(),
+                ecosystem_metrics['early_stage_ratio'].median(),
+                ecosystem_metrics['late_stage_ratio'].median()
+            ],
+            'Std Dev': [
+                ecosystem_metrics['avg_company_age'].std(),
+                ecosystem_metrics['early_stage_ratio'].std(),
+                ecosystem_metrics['late_stage_ratio'].std()
+            ]
+        })
+        st.dataframe(maturity_metrics.round(2))
 
 st.markdown(
     """
@@ -1885,9 +3154,11 @@ page = st.sidebar.radio(
         "Funding Stage Analysis",
         "Investor Demographics",
         "Sectoral & Regional Analysis",
+        "Ecosystem Statistical Analysis",  # Add the new section
         "Predictive Insights",
         "Conclusions & Recommendations",
         "Venture Capital Heat Map",
+        "Ecosystem Funding Distribution"
     ],
 )
 
@@ -2120,6 +3391,9 @@ elif page == "Funding Stage Analysis":
         unsafe_allow_html=True,
     )
 
+    # Display median age by funding series
+    display_median_age_by_series()
+
     # Add the new company age analysis
     display_company_age_analysis()
     
@@ -2315,7 +3589,10 @@ elif page == "Sectoral & Regional Analysis":
         unsafe_allow_html=True,
     )
     
-    # Add the new ecosystem sector trends visualization
+    # Add the deal count analysis
+    display_stage_sector_deal_count_analysis()
+    
+    # Add the existing ecosystem sector trends visualization
     display_ecosystem_sector_trends()
     
     # Add sector funding heatmaps
@@ -2376,7 +3653,7 @@ elif page == "Sectoral & Regional Analysis":
         colorscale='Viridis',
         text=deals_pivot.values.astype(int),
         texttemplate="%{text}",
-        textfont={"size": 12},
+        textfont={"size": 16},
         hoverongaps=False,
     ))
     
@@ -2387,11 +3664,30 @@ elif page == "Sectoral & Regional Analysis":
             x=0.5,
             xanchor='center'
         ),
-        xaxis_title="Sector",
-        yaxis_title="Year",
+        xaxis=dict(
+            title=dict(
+                text="Sector",
+                font=dict(size=15, color='rgb(50, 50, 50)')
+            ),
+            tickfont=dict(size=15, color='rgb(50, 50, 50)')
+        ),
+        yaxis=dict(
+            title=dict(
+                text="Year", 
+                font=dict(size=15, color='rgb(50, 50, 50)')
+            ),
+            tickfont=dict(size=15, color='rgb(50, 50, 50)')
+        ),
         height=500,
         template='plotly_white',
-        margin=dict(t=100, b=50, l=50, r=50)
+        margin=dict(t=100, b=50, l=50, r=50),
+        coloraxis_colorbar=dict(
+            title=dict(
+                text="Number of Deals",
+                font=dict(size=15, color='rgb(50, 50, 50)')
+            ),
+            tickfont=dict(size=15, color='rgb(50, 50, 50)')
+        )
     )
     
     st.plotly_chart(fig_deals, use_container_width=True)
@@ -2416,8 +3712,20 @@ elif page == "Sectoral & Regional Analysis":
             x=0.5,
             xanchor='center'
         ),
-        xaxis_title="Sector",
-        yaxis_title="Year",
+        xaxis=dict(
+            title=dict(
+                text="Sector",
+                font=dict(size=15, color='rgb(50, 50, 50)')
+            ),
+            tickfont=dict(size=15, color='rgb(50, 50, 50)')
+        ),
+        yaxis=dict(
+            title=dict(
+                text="Year", 
+                font=dict(size=15, color='rgb(50, 50, 50)')
+            ),
+            tickfont=dict(size=15, color='rgb(50, 50, 50)')
+        ),
         height=500,
         template='plotly_white',
         margin=dict(t=100, b=50, l=50, r=50)
@@ -2465,8 +3773,20 @@ elif page == "Sectoral & Regional Analysis":
                 template="plotly_white",
                 height=500,
                 showlegend=False,
-                xaxis_title="Number of Companies",
-                yaxis_title="Sectors",
+                xaxis=dict(
+                    title=dict(
+                        text="Number of Companies",
+                        font=dict(size=15, color='rgb(50, 50, 50)')
+                    ),
+                    tickfont=dict(size=15, color='rgb(50, 50, 50)')
+                ),
+                yaxis=dict(
+                    title=dict(
+                        text="Sectors",
+                        font=dict(size=15, color='rgb(50, 50, 50)')
+                    ),
+                    tickfont=dict(size=15, color='rgb(50, 50, 50)')
+                )
             )
             st.plotly_chart(fig_, use_container_width=True)
             create_download_buttons(fig_, "top_sectors")
@@ -2568,11 +3888,29 @@ elif page == "Sectoral & Regional Analysis":
         template="plotly_white",
         height=500,
         showlegend=False,
-        xaxis_title="Number of Companies",
-        yaxis_title="Ecosystem",
+                xaxis=dict(
+                    title=dict(
+                        text="Number of Companies",
+                        font=dict(size=15, color='rgb(50, 50, 50)')
+                    ),
+                    tickfont=dict(size=15, color='rgb(50, 50, 50)')
+                ),
+                yaxis=dict(
+                    title=dict(
+                        text="Ecosystem",
+                        font=dict(size=15, color='rgb(50, 50, 50)')
+                    ),
+                    tickfont=dict(size=15, color='rgb(50, 50, 50)')
+                )
     )
     st.plotly_chart(fig_, use_container_width=True)
     create_download_buttons(fig_, "ecosystem_analysis")
+
+    # Add the bottom sectors analysis
+    display_bottom_sectors_analysis()
+
+elif page == "Ecosystem Statistical Analysis":
+    display_ecosystem_statistical_analysis()
 
 elif page == "Predictive Insights":
     st.header("🤖 Predictive Insights & Forecasting")
@@ -2589,6 +3927,9 @@ elif page == "Predictive Insights":
 
 elif page == "Venture Capital Heat Map":
     display_venture_capital_heatmap()
+
+elif page == "Ecosystem Funding Distribution":
+    display_ecosystem_funding_distribution()
 
 else:
     st.header("📋 Conclusions & Business Implications")
