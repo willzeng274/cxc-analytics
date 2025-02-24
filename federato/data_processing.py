@@ -175,7 +175,6 @@ def main():
         show_nullity_analysis(df)
         show_unique_analysis(df)
         
-        # Add timestamp filtering
         st.write("### 🕒 Timestamp Filtering")
         cutoff_date = pd.Timestamp('2025-01-01')
         initial_rows = len(df)
@@ -184,12 +183,10 @@ def main():
         st.write(f"Removed {rows_removed:,} rows with event_time before 2025 ({(rows_removed/initial_rows*100):.1f}% of data)")
         st.write(f"Remaining rows: {len(df):,}")
         
-        # Add session analysis
         st.write("### 📊 Session Analysis")
         session_df = df.copy()
         session_df['event_time'] = pd.to_datetime(session_df['event_time'])
         
-        # Group by session and analyze first/last events
         session_analysis = session_df.groupby('session_id').agg({
             'event_time': ['min', 'max'],
             'event_type': ['first', 'last']
@@ -201,7 +198,6 @@ def main():
         st.write("#### Session Event Analysis")
         st.write(f"Total unique sessions: {len(session_analysis):,}")
         
-        # First events distribution
         first_events = session_analysis['first_event'].value_counts()
         st.write("**Most Common First Events:**")
         first_events_df = pd.DataFrame({
@@ -211,7 +207,6 @@ def main():
         })
         st.dataframe(first_events_df.head(), use_container_width=True)
         
-        # Last events distribution
         last_events = session_analysis['last_event'].value_counts()
         st.write("**Most Common Last Events:**")
         last_events_df = pd.DataFrame({
@@ -221,7 +216,6 @@ def main():
         })
         st.dataframe(last_events_df.head(), use_container_width=True)
         
-        # Session duration statistics
         st.write("**Session Duration Statistics (minutes):**")
         duration_stats = session_analysis['duration_minutes'].describe().round(2)
         st.dataframe(pd.DataFrame(duration_stats), use_container_width=True)
