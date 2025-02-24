@@ -24,7 +24,6 @@ def analyze_data_quality(df):
         'correlation_analysis': {}
     }
     
-    # Missing values analysis
     missing_counts = df.isnull().sum()
     missing_percentages = (missing_counts / len(df)) * 100
     quality_analysis['missing_values'] = {
@@ -32,19 +31,16 @@ def analyze_data_quality(df):
         'percentages': missing_percentages.to_dict()
     }
     
-    # Unique value counts and categorical analysis
     for col in df.select_dtypes(include=['object', 'category']).columns:
         unique_counts = df[col].nunique()
-        value_distribution = df[col].value_counts().head(10).to_dict()  # Top 10 most common values
+        value_distribution = df[col].value_counts().head(10).to_dict()
         quality_analysis['unique_value_counts'][col] = {
             'unique_count': unique_counts,
             'top_values': value_distribution
         }
     
-    # Handle date column separately
     if 'date' in df.columns:
         unique_counts = df['date'].nunique()
-        # Convert dates to strings in YYYY-MM-DD format
         value_distribution = df['date'].value_counts().head(10)
         value_distribution_dict = {date.strftime('%Y-%m-%d'): int(count) for date, count in value_distribution.items()}
         quality_analysis['unique_value_counts']['date'] = {
@@ -52,16 +48,13 @@ def analyze_data_quality(df):
             'top_values': value_distribution_dict
         }
     
-    # Data types analysis
     quality_analysis['data_types'] = df.dtypes.astype(str).to_dict()
     
-    # Numeric columns analysis
     numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns
     for col in numeric_cols:
         stats = df[col].describe()
         quality_analysis['value_ranges'][col] = stats.to_dict()
         
-        # Detect potential outliers using IQR method
         Q1 = df[col].quantile(0.25)
         Q3 = df[col].quantile(0.75)
         IQR = Q3 - Q1
@@ -71,10 +64,8 @@ def analyze_data_quality(df):
             'percentage': (len(outliers) / len(df)) * 100
         }
     
-    # Temporal analysis
     if 'client_event_time' in df.columns:
         client_event_time = pd.to_datetime(df['client_event_time'])
-        # Convert dates to strings in YYYY-MM-DD format
         daily_counts = client_event_time.dt.date.value_counts().sort_index()
         daily_counts_dict = {date.strftime('%Y-%m-%d'): int(count) for date, count in daily_counts.items()}
         
@@ -83,24 +74,21 @@ def analyze_data_quality(df):
             'weekday_distribution': client_event_time.dt.dayofweek.value_counts().sort_index().to_dict()
         }
     
-    # Categorical imbalance analysis
     categorical_cols = df.select_dtypes(include=['object', 'category']).columns
     for col in categorical_cols:
         value_counts = df[col].value_counts()
         imbalance_ratio = value_counts.max() / value_counts.min() if len(value_counts) > 1 else 1
         quality_analysis['categorical_imbalance'][col] = {
-            'imbalance_ratio': float(imbalance_ratio),  # Convert numpy types to native Python types
+            'imbalance_ratio': float(imbalance_ratio),
             'dominant_class_percentage': float((value_counts.max() / len(df)) * 100)
         }
     
-    # Correlation analysis for numeric columns
     if len(numeric_cols) > 1:
         correlation_matrix = df[numeric_cols].corr()
-        # Convert to dictionary, keeping only strong correlations (|r| > 0.5)
         strong_correlations = {}
         for col1 in correlation_matrix.columns:
             strong_corr = correlation_matrix[col1][abs(correlation_matrix[col1]) > 0.5]
-            if len(strong_corr) > 1:  # More than just self-correlation
+            if len(strong_corr) > 1:
                 strong_correlations[col1] = {str(k): float(v) for k, v in strong_corr.to_dict().items()}
         quality_analysis['correlation_analysis'] = strong_correlations
     
@@ -115,7 +103,6 @@ def analyze_event_patterns(df):
         'time_between_events': {}
     }
     
-    # Session analysis
     session_stats = df.groupby('session_id').size().describe()
     event_analysis['session_patterns'] = {
         'events_per_session': {k: float(v) for k, v in session_stats.to_dict().items()},
@@ -126,7 +113,6 @@ def analyze_event_patterns(df):
         }
     }
     
-    # User behavior patterns
     user_stats = df.groupby('user_id').size().describe()
     session_stats = df.groupby('user_id')['session_id'].nunique().describe()
     event_analysis['user_patterns'] = {
@@ -134,19 +120,16 @@ def analyze_event_patterns(df):
         'sessions_per_user': {k: float(v) for k, v in session_stats.to_dict().items()}
     }
     
-    # Event sequence analysis
     df_sorted = df.sort_values(['user_id', 'client_event_time'])
     event_pairs = df_sorted.groupby('user_id')['event_type'].apply(
         lambda x: pd.Series(zip(x, x.shift(-1)))
     ).value_counts().head(10)
     
-    # Convert tuple keys to strings
     event_pairs_dict = {f"{pair[0]} -> {pair[1]}": int(count) for pair, count in event_pairs.items()}
     event_analysis['event_sequences'] = {
         'common_event_pairs': event_pairs_dict
     }
     
-    # Time between events analysis
     df_sorted['time_to_next'] = df_sorted.groupby('user_id')['client_event_time'].diff().dt.total_seconds()
     time_stats = df_sorted['time_to_next'].describe()
     event_type_means = df_sorted.groupby('event_type')['time_to_next'].mean().sort_values(ascending=False).head(10)
@@ -162,45 +145,37 @@ def analyze_user_journey(df):
     """Analyze user journeys and event sequences."""
     journey_analysis = {
         'event_flows': {
-            'sequences_2': {},  # Top 20 2-event sequences
-            'sequences_3': {},  # Top 10 3-event sequences
-            'sequences_4': {},  # Top 10 4-event sequences
-            'sequences_5': {}   # Top 10 5-event sequences
+            'sequences_2': {},
+            'sequences_3': {},
+            'sequences_4': {},
+            'sequences_5': {}
         },
         'path_analysis': {},
         'user_segments': {},
         'conversion_funnels': {}
     }
     
-    # Sort by session and time
     df_sorted = df.sort_values(['session_id', 'client_event_time'])
     
-    # Filter out technical events
     event_blacklist = {
         'session_start', 'session_end', '::nav-header:user_signed-out', 
         'user_signed_out', 'user_signed_in', 'page_view', 'page_load'
     }
     df_filtered = df_sorted[~df_sorted['event_type'].isin(event_blacklist)]
     
-    # Group by session to analyze event sequences
     session_sequences = df_filtered.groupby('session_id')['event_type'].agg(list).reset_index()
     
-    # Initialize sequence counters for each length
     sequence_counts = {2: {}, 3: {}, 4: {}, 5: {}}
     
-    # Process each session's events
     for _, row in session_sequences.iterrows():
         events = row['event_type']
         if len(events) >= 2:
-            # Process sequences of different lengths
             for length in [2, 3, 4, 5]:
                 if len(events) >= length:
                     for i in range(len(events) - length + 1):
-                        # Create sequence key as a simple string with delimiter
                         seq = " → ".join(events[i:i+length])
                         sequence_counts[length][seq] = sequence_counts[length].get(seq, 0) + 1
     
-    # Store top sequences for each length
     for length in [2, 3, 4, 5]:
         top_limit = 20 if length == 2 else 10
         top_sequences = sorted(
@@ -209,18 +184,16 @@ def analyze_user_journey(df):
             reverse=True
         )[:top_limit]
         
-        # Store sequences with their counts
         journey_analysis['event_flows'][f'sequences_{length}'] = {
             sequence: count for sequence, count in top_sequences
         }
     
-    # Path analysis - identify entry and exit points by session
     entry_points = {}
     exit_points = {}
     
     for _, row in session_sequences.iterrows():
         events = row['event_type']
-        if events:  # Check if the session has any events
+        if events:
             entry = events[0]
             exit = events[-1]
             entry_points[entry] = entry_points.get(entry, 0) + 1
@@ -231,14 +204,11 @@ def analyze_user_journey(df):
         'common_exit_points': dict(sorted(exit_points.items(), key=lambda x: x[1], reverse=True)[:10])
     }
     
-    # User segments based on behavior
     user_event_counts = df.groupby('user_id')['event_type'].value_counts().unstack(fill_value=0)
     
-    # Use K-means to identify user segments
     from sklearn.cluster import KMeans
     from sklearn.preprocessing import StandardScaler
     
-    # Select top 20 most common events for clustering
     top_events = df['event_type'].value_counts().head(20).index
     X = user_event_counts[top_events]
     X_scaled = StandardScaler().fit_transform(X)
@@ -246,7 +216,6 @@ def analyze_user_journey(df):
     kmeans = KMeans(n_clusters=5, random_state=42)
     clusters = kmeans.fit_predict(X_scaled)
     
-    # Analyze cluster characteristics
     cluster_profiles = {}
     for cluster_id in range(5):
         cluster_mask = clusters == cluster_id
@@ -262,7 +231,6 @@ def analyze_user_journey(df):
     
     journey_analysis['user_segments'] = cluster_profiles
     
-    # Conversion funnels analysis
     common_funnels = {
         'account_creation': [
             'session_start',
@@ -307,17 +275,14 @@ def analyze_temporal_relationships(df):
         'session_timing': {}
     }
     
-    # Convert client_event_time to datetime if not already
     df['client_event_time'] = pd.to_datetime(df['client_event_time'])
     
-    # Extract temporal components
     df['hour'] = df['client_event_time'].dt.hour
     df['weekday'] = df['client_event_time'].dt.day_name()
     df['month'] = df['client_event_time'].dt.month
     df['date'] = df['client_event_time'].dt.date
     df['year_month'] = df['client_event_time'].dt.strftime('%Y-%m')
     
-    # Hourly patterns
     hourly_counts = df.groupby('hour').size()
     temporal_relationships['hourly_patterns'] = {
         'distribution': {str(k): int(v) for k, v in hourly_counts.to_dict().items()},
@@ -325,7 +290,6 @@ def analyze_temporal_relationships(df):
         'quiet_hours': {str(k): int(v) for k, v in hourly_counts.nsmallest(5).to_dict().items()}
     }
     
-    # Weekday patterns with hour combinations
     weekday_hour_counts = df.groupby(['weekday', 'hour']).size().unstack(fill_value=0)
     temporal_relationships['weekday_patterns'] = {
         'weekday_distribution': {str(k): int(v) for k, v in df.groupby('weekday').size().to_dict().items()},
@@ -336,7 +300,6 @@ def analyze_temporal_relationships(df):
         'peak_weekdays': {str(k): int(v) for k, v in df.groupby('weekday').size().nlargest(3).to_dict().items()}
     }
     
-    # Monthly patterns
     monthly_counts = df.groupby('year_month').size()
     temporal_relationships['monthly_patterns'] = {
         'distribution': {str(k): int(v) for k, v in monthly_counts.to_dict().items()},
@@ -344,7 +307,6 @@ def analyze_temporal_relationships(df):
         'month_over_month_growth': {str(k): float(v) for k, v in (monthly_counts.pct_change() * 100).dropna().to_dict().items()}
     }
     
-    # Daily patterns and peak days
     daily_counts = df.groupby('date').size()
     temporal_relationships['daily_patterns'] = {
         'distribution': {d.strftime('%Y-%m-%d'): int(count) for d, count in daily_counts.items()},
@@ -356,10 +318,8 @@ def analyze_temporal_relationships(df):
         }
     }
     
-    # Peak activity analysis
     peak_activity = {}
     
-    # Peak hours by weekday
     for weekday in df['weekday'].unique():
         weekday_data = df[df['weekday'] == weekday]
         peak_hours = weekday_data.groupby('hour').size().nlargest(3)
@@ -374,7 +334,6 @@ def analyze_temporal_relationships(df):
         'overall_peak_day_count': int(daily_counts.max())
     }
     
-    # Session timing analysis
     df_sorted = df.sort_values(['session_id', 'client_event_time'])
     session_times = df_sorted.groupby('session_id').agg({
         'client_event_time': ['first', 'last']
@@ -398,14 +357,12 @@ def analyze_geographic_relationships(df):
         'city_patterns': {}
     }
     
-    # Device distribution by country
     country_device = pd.crosstab(df['country'], df['device_family'])
     geographic_relationships['country_device_distribution'] = {
         str(country): {str(k): int(v) for k, v in devices.to_dict().items()}
         for country, devices in country_device.iterrows()
     }
     
-    # Event preferences by region
     region_events = df.groupby(['region', 'event_type']).size().unstack(fill_value=0)
     top_events = df['event_type'].value_counts().head(10).index
     
@@ -414,7 +371,6 @@ def analyze_geographic_relationships(df):
         for region, events in region_events.iterrows()
     }
     
-    # City-level patterns
     city_metrics = df.groupby('city').agg({
         'user_id': 'nunique',
         'session_id': 'nunique',
@@ -425,7 +381,6 @@ def analyze_geographic_relationships(df):
     city_metrics['events_per_user'] = city_metrics['total_events'] / city_metrics['unique_users']
     city_metrics['sessions_per_user'] = city_metrics['unique_sessions'] / city_metrics['unique_users']
     
-    # Convert DataFrame records to serializable format
     city_patterns = []
     for record in city_metrics.sort_values('total_events', ascending=False).head(20).to_dict('records'):
         city_patterns.append({
@@ -448,14 +403,12 @@ def analyze_data(df):
     
     try:
         print("Converting timestamp columns...")
-        # Convert timestamp columns
         timestamp_cols = ['client_event_time', 'client_upload_time', 'event_time', 
                          'processed_time', 'server_received_time', 'server_upload_time']
         for col in timestamp_cols:
             df[col] = pd.to_datetime(df[col])
 
         print("Calculating basic stats...")
-        # Original analysis components
         results['basic_stats'] = {
             'total_events': int(len(df)),
             'unique_users': int(df['user_id'].nunique()),
@@ -486,7 +439,6 @@ def analyze_data(df):
             'hourly_distribution': {str(k): int(v) for k, v in df['hour'].value_counts().sort_index().to_dict().items()}
         }
 
-        # Validate basic results before proceeding
         print("Validating initial results...")
         validate_results(results)
 
@@ -556,7 +508,6 @@ def validate_results(results):
 def save_results(results, output_file='analysis_results.json'):
     """Save analysis results to a JSON file."""
     try:
-        # Validate results before saving
         validate_results(results)
         
         with open(output_file, 'w') as f:
@@ -571,15 +522,12 @@ def save_results(results, output_file='analysis_results.json'):
         raise
 
 def main():
-    # Load the data
     print("Loading data...")
     df = load_data()
     
-    # Perform analysis
     print("Analyzing data...")
     results = analyze_data(df)
     
-    # Save results
     print("Saving results...")
     save_results(results)
     print("Analysis complete. Results saved to analysis_results.json")

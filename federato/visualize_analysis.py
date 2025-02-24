@@ -430,7 +430,6 @@ def create_temporal_relationship_plots(results):
     st.subheader("Hourly Activity Patterns")
     hourly_patterns = results['temporal_relationships']['hourly_patterns']
     
-    # Create a DataFrame with all hours (0-23) and merge with actual data
     all_hours = pd.DataFrame({'Hour': range(24)})
     hourly_dist = hourly_patterns['distribution']
     data_df = pd.DataFrame({
@@ -438,11 +437,9 @@ def create_temporal_relationship_plots(results):
         'Events': list(hourly_dist.values())
     })
     
-    # Merge to ensure all hours are present
     hourly_df = pd.merge(all_hours, data_df, on='Hour', how='left').fillna(0)
     hourly_df = hourly_df.sort_values('Hour')
     
-    # Function to format numbers (e.g., 150000 -> "150k")
     def format_number(num):
         if num >= 1_000_000:
             return f"{num/1_000_000:.0f}M"
@@ -451,7 +448,6 @@ def create_temporal_relationship_plots(results):
         else:
             return str(int(num))
     
-    # Create figure using go.Figure
     fig = go.Figure()
     fig.add_trace(
         go.Scatter(
@@ -804,26 +800,21 @@ def create_temporal_heatmap(results):
     Includes hourly, daily, weekly, and monthly patterns to identify peak usage times.
     """)
     
-    # Hour of Day Analysis
     st.subheader("📊 Hourly Activity Patterns")
     col1, col2 = st.columns(2)
     
     with col1:
-        # Hour of day distribution
         hourly_dist = results['temporal_relationships']['hourly_patterns']['distribution']
         
-        # Create a DataFrame with all hours (0-23) and merge with actual data
         all_hours = pd.DataFrame({'Hour': range(24)})
         data_df = pd.DataFrame({
             'Hour': [int(hour) for hour in hourly_dist.keys()],
             'Events': list(hourly_dist.values())
         })
         
-        # Merge to ensure all hours are present
         hourly_df = pd.merge(all_hours, data_df, on='Hour', how='left').fillna(0)
         hourly_df = hourly_df.sort_values('Hour')
         
-        # Function to format numbers (e.g., 150000 -> "150k")
         def format_number(num):
             if num >= 1_000_000:
                 return f"{num/1_000_000:.0f}M"
@@ -832,7 +823,6 @@ def create_temporal_heatmap(results):
             else:
                 return str(int(num))
         
-        # Create figure using go.Figure instead of px.line
         fig = go.Figure()
         fig.add_trace(
             go.Scatter(
@@ -853,17 +843,16 @@ def create_temporal_heatmap(results):
             yaxis_title="Number of Events",
             xaxis=dict(
                 tickmode='array',
-                ticktext=[str(i).zfill(2) for i in range(24)],  # 00, 01, 02, ..., 23
+                ticktext=[str(i).zfill(2) for i in range(24)],
                 tickvals=list(range(24)),
-                range=[-0.5, 23.5],  # Ensure full range is shown
-                tickangle=45  # Tilt labels 45 degrees
+                range=[-0.5, 23.5],
+                tickangle=45
             ),
             showlegend=False
         )
         st.plotly_chart(fig, use_container_width=True)
     
     with col2:
-        # Peak hours
         st.write("**Peak Activity Hours**")
         peak_hours = results['temporal_relationships']['hourly_patterns']['peak_hours']
         peak_df = pd.DataFrame({
@@ -875,18 +864,13 @@ def create_temporal_heatmap(results):
                     color_discrete_sequence=['#2ecc71'])
         st.plotly_chart(fig, use_container_width=True)
     
-    # Weekday + Hour Analysis
     st.subheader("📅 Weekly Activity Patterns")
     
-    # Create weekday x hour heatmap
     weekday_hour_matrix = results['temporal_relationships']['weekday_patterns']['weekday_hour_matrix']
     weekday_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
     
-    # Initialize the matrix with zeros
     matrix_data = [[0 for _ in range(24)] for _ in range(7)]
     
-    # Fill in the matrix with actual values
-    # The data is structured as hour -> weekday -> value
     for hour_str, weekday_data in weekday_hour_matrix.items():
         hour = int(hour_str)
         for weekday, value in weekday_data.items():
@@ -895,7 +879,7 @@ def create_temporal_heatmap(results):
     
     fig = go.Figure(data=go.Heatmap(
         z=matrix_data,
-        x=[f"{str(i).zfill(2)}:00" for i in range(24)],  # 00:00, 01:00, ..., 23:00
+        x=[f"{str(i).zfill(2)}:00" for i in range(24)],
         y=weekday_order,
         colorscale='Viridis',
         hoverongaps=False,
@@ -927,12 +911,11 @@ def create_temporal_heatmap(results):
             showgrid=True,
             gridcolor='rgba(211, 211, 211, 0.5)'
         ),
-        height=500,  # Increased height for better visibility
-        margin=dict(l=50, r=100, t=50, b=80)  # Adjusted margins for better layout
+        height=500,
+        margin=dict(l=50, r=100, t=50, b=80)
     )
     st.plotly_chart(fig, use_container_width=True)
     
-    # Top 10 Most Active Days
     st.subheader("📊 Peak Activity Days")
     st.write("**Top 10 Most Active Days**")
     
@@ -942,19 +925,16 @@ def create_temporal_heatmap(results):
         'Events': list(top_days.values())
     })
     
-    # Sort by events in descending order and take top 10
     top_days_df = top_days_df.nlargest(10, 'Events')
-    # Then sort ascending for display (bottom to top)
     top_days_df = top_days_df.sort_values('Events', ascending=True)
     
-    # Create list of dates in the correct order (matching the sorted events)
     dates_ordered = top_days_df['Date'].tolist()
     
     fig = go.Figure()
     fig.add_trace(
         go.Bar(
             x=top_days_df['Events'],
-            y=dates_ordered,  # Use ordered dates list
+            y=dates_ordered,
             orientation='h',
             marker_color='#1f77b4',
             text=top_days_df['Events'].apply(format_number),
@@ -974,21 +954,20 @@ def create_temporal_heatmap(results):
         xaxis=dict(
             showgrid=True,
             gridcolor='rgba(211, 211, 211, 0.5)',
-            range=[0, max_events * 1.1]  # Add 10% padding for text labels
+            range=[0, max_events * 1.1]
         ),
         yaxis=dict(
-            type='category',  # Force categorical axis
-            categoryorder='array',  # Specify the order
-            categoryarray=dates_ordered,  # Use our ordered dates
+            type='category',
+            categoryorder='array',
+            categoryarray=dates_ordered,
             showgrid=True,
             gridcolor='rgba(211, 211, 211, 0.5)'
         ),
-        bargap=0.2,  # Add some gap between bars
-        margin=dict(l=20, r=100, t=40, b=40)  # Increased right margin for labels
+        bargap=0.2,
+        margin=dict(l=20, r=100, t=40, b=40)
     )
     st.plotly_chart(fig, use_container_width=True)
     
-    # Daily Stats Summary
     daily_stats = results['temporal_relationships']['daily_patterns']['daily_stats']
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -998,14 +977,11 @@ def create_temporal_heatmap(results):
     with col3:
         st.metric("Daily Events Std Dev", f"{daily_stats['std']:,.0f}")
     
-    # Peak Activity Summary
     st.subheader("🎯 Peak Activity Summary")
     peak_activity = results['temporal_relationships']['peak_activity']
     
-    # Display overall peak day
     st.write(f"**Overall Peak Day:** {peak_activity['overall_peak_day']} with {peak_activity['overall_peak_day_count']:,} events")
     
-    # Peak hours by weekday
     peak_by_weekday = peak_activity['by_weekday']
     weekday_summary = []
     for weekday, data in peak_by_weekday.items():
@@ -1076,7 +1052,6 @@ def create_geographic_insights(results):
     user behavior, and regional preferences.
     """)
     
-    # Create choropleth map
     country_data = pd.DataFrame({
         'Country': results['geographic_analysis']['country_distribution'].keys(),
         'Events': results['geographic_analysis']['country_distribution'].values()
