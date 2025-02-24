@@ -16,7 +16,6 @@ streamlit run visualize_analysis.py
 ## RunQL
 
 ```bash
-cd runQL
 pip install -e .
 ```
 
