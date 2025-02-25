@@ -9,6 +9,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 from plotly.subplots import make_subplots
+from sector_ecosystem_contribution import display_sector_ecosystem_contribution_heatmap
 
 @st.cache_data
 def create_dual_axis_figure(x, y1, y2, name1, name2, title, y1_title, y2_title):
@@ -820,7 +821,7 @@ def display_venture_capital_heatmap():
         title=dict(
             text='Size of Total Rounds* ($M)',
             x=0.5,
-            y=0.95,
+            y=1.00,
             xanchor='center',
             yanchor='top',
             font=dict(size=20, color='rgb(30, 30, 30)')
@@ -2622,7 +2623,7 @@ def display_bottom_sectors_analysis():
 @st.cache_data
 def display_sector_ecosystem_heatmap():
     """Display heatmap of sector concentration across ecosystems."""
-    st.header("🔥 Sector Concentration by Ecosystem")
+    st.header("Sector Concentration by Ecosystem")
     st.markdown(
         """
         <div class='insight-box'>
@@ -3180,6 +3181,7 @@ def display_investor_stage_analysis():
                 y=region_data['amount'],
                 text=region_data['amount'].round(1).apply(lambda x: f'${x:.1f}M'),
                 textposition='outside',
+                textfont=dict(size=14, color='rgb(30, 30, 30)'),
                 marker_color=region_colors[region]
             ))
 
@@ -3198,19 +3200,28 @@ def display_investor_stage_analysis():
                 yanchor="bottom",
                 y=1.02,
                 xanchor="right",
-                x=1
+                x=1,
+                font=dict(size=14, color='rgb(30, 30, 30)')
             ),
             height=500,
             xaxis=dict(
-                title="Funding Stage",
+                title=dict(
+                    text="Funding Stage",
+                    font=dict(size=16, color='rgb(30, 30, 30)')
+                ),
                 tickangle=-45,
                 categoryorder='array',
-                categoryarray=stage_order
+                categoryarray=stage_order,
+                tickfont=dict(size=14, color='rgb(30, 30, 30)')
             ),
             yaxis=dict(
-                title="Average Deal Size ($ Millions)",
+                title=dict(
+                    text="Average Deal Size ($ Millions)",
+                    font=dict(size=16, color='rgb(30, 30, 30)')
+                ),
                 tickprefix="$",
-                ticksuffix="M"
+                ticksuffix="M",
+                tickfont=dict(size=14, color='rgb(30, 30, 30)')
             )
         )
         
@@ -3874,7 +3885,7 @@ elif page == "Investor Demographics":
     st.markdown(
         """
         ### 🌐 Investment by Country
-        Total deals vs lead investments by country. Shows international investment patterns.
+        Total number of deals and investment amounts by country over time, showing international investment patterns.
     """
     )
 
@@ -3884,76 +3895,114 @@ elif page == "Investor Demographics":
                 analysis["investor_demographics"]["country_analysis"]
             )
 
-            grouped_country_dist = pd.DataFrame(
-                {
-                    "country": ["Canada", "USA", "Other International"],
-                    "dealId": [
-                        (
-                            country_dist.loc["Canada", "dealId"]
-                            if "Canada" in country_dist.index
-                            else 0
-                        ),
-                        (
-                            country_dist.loc["USA", "dealId"]
-                            if "USA" in country_dist.index
-                            else 0
-                        ),
-                        country_dist.loc[
-                            ~country_dist.index.isin(["Canada", "USA"]), "dealId"
-                        ].sum(),
-                    ],
-                    "leadInvestorFlag": [
-                        (
-                            country_dist.loc["Canada", "leadInvestorFlag"]
-                            if "Canada" in country_dist.index
-                            else 0
-                        ),
-                        (
-                            country_dist.loc["USA", "leadInvestorFlag"]
-                            if "USA" in country_dist.index
-                            else 0
-                        ),
-                        country_dist.loc[
-                            ~country_dist.index.isin(["Canada", "USA"]),
-                            "leadInvestorFlag",
-                        ].sum(),
-                    ],
-                }
+            # Get deals data
+            deals_df = pd.DataFrame(analysis['raw_data']['deals'])
+            investors_df = pd.DataFrame(analysis["raw_data"]["deal_investor"])
+            
+            # Add year column
+            deals_df['year'] = pd.to_datetime(deals_df['date']).dt.year
+            
+            # Merge deals with investors
+            merged_df = pd.merge(
+                investors_df[['dealId', 'investorCountry']], 
+                deals_df[['id', 'amount', 'year']],
+                left_on='dealId',
+                right_on='id',
+                how='left'
             )
 
+            # Group countries
+            merged_df['region'] = merged_df['investorCountry'].apply(
+                lambda x: 'Canada' if x == 'Canada' 
+                else ('USA' if x == 'USA' 
+                else 'Other International')
+            )
+
+            # Calculate yearly stats by region
+            yearly_stats = merged_df.groupby(['year', 'region']).agg({
+                'dealId': 'count',
+                'amount': 'sum'
+            }).reset_index()
+
+            # Filter years before 2025
+            yearly_stats = yearly_stats[yearly_stats['year'] < 2025]
+
+            # Create figure with secondary y-axis
             fig_ = go.Figure()
-            fig_.add_trace(
-                go.Bar(
-                    x=grouped_country_dist["country"],
-                    y=grouped_country_dist["dealId"],
-                    name="Total Deals",
-                    marker_color="rgba(52, 152, 219, 0.8)",
-                )
-            )
 
-            fig_.add_trace(
-                go.Bar(
-                    x=grouped_country_dist["country"],
-                    y=grouped_country_dist["leadInvestorFlag"],
-                    name="Lead Investments",
-                    marker_color="rgba(231, 76, 60, 0.8)",
+            colors = {
+                'Canada': 'rgba(52, 152, 219, 0.8)',
+                'USA': 'rgba(46, 204, 113, 0.8)', 
+                'Other International': 'rgba(155, 89, 182, 0.8)'
+            }
+
+            for region in ['Canada', 'USA', 'Other International']:
+                region_data = yearly_stats[yearly_stats['region'] == region]
+                
+                # Bar chart for deal count
+                fig_.add_trace(
+                    go.Bar(
+                        x=region_data['year'],
+                        y=region_data['dealId'],
+                        name=f"{region} Deals",
+                        marker_color=colors[region],
+                        text=region_data['dealId'],
+                        textposition='inside',
+                        textfont=dict(size=14, color='white'),
+                        offsetgroup=region
+                    )
                 )
-            )
+                
+                # Line chart for amount
+                fig_.add_trace(
+                    go.Scatter(
+                        x=region_data['year'],
+                        y=region_data['amount']/1e6,
+                        name=f"{region} Amount",
+                        line=dict(color=colors[region], width=3),
+                        mode='lines+markers',
+                        marker=dict(size=8),
+                        yaxis='y2'
+                    )
+                )
 
             fig_.update_layout(
-                title="Investment Activity by Region",
-                barmode="group",
+                title="Investment Activity by Region Over Time",
                 template="plotly_white",
-                xaxis_title="Region",
-                yaxis_title="Number of Deals",
-                showlegend=True,
-                legend={
-                    "orientation": "h",
-                    "yanchor": "bottom",
-                    "y": 1.02,
-                    "xanchor": "right",
-                    "x": 1,
-                },
+                xaxis=dict(
+                    title=dict(
+                        text="Year",
+                        font=dict(size=16, color='rgb(30, 30, 30)')
+                    ),
+                    tickfont=dict(size=14, color='rgb(30, 30, 30)'),
+                    tickmode='array',
+                    tickvals=list(range(2019, 2025))
+                ),
+                yaxis=dict(
+                    title=dict(
+                        text="Number of Deals",
+                        font=dict(size=16, color='rgb(30, 30, 30)')
+                    ),
+                    tickfont=dict(size=14, color='rgb(30, 30, 30)')
+                ),
+                yaxis2=dict(
+                    title=dict(
+                        text="Investment Amount ($ Millions)",
+                        font=dict(size=16, color='rgb(30, 30, 30)')
+                    ),
+                    tickfont=dict(size=14, color='rgb(30, 30, 30)'),
+                    overlaying='y',
+                    side='right'
+                ),
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                ),
+                height=600,
+                barmode='group'
             )
 
             st.plotly_chart(fig_, use_container_width=True)
@@ -4023,11 +4072,32 @@ elif page == "Investor Demographics":
             )
 
             fig_.update_layout(
-                title="Top 20 Most Active Investors",
-                template="plotly_white",
+                title=dict(
+                    text='Top 20 Most Active Investors',
+                    font=dict(size=20, color='rgb(2, 33, 105)')
+                ),
+                template="plotly_white", 
                 height=800,
-                xaxis_title="Number of Deals",
-                yaxis_title="Investor Name",
+                xaxis=dict(
+                    showgrid=True,
+                    gridcolor='rgba(128, 128, 128, 0.2)',
+                    zeroline=False,
+                    title=dict(
+                        text='Number of Deals',
+                        font=dict(size=15, color='rgb(50, 50, 50)')
+                    ),
+                    tickfont=dict(size=14, color='rgb(50, 50, 50)')
+                ),
+                yaxis=dict(
+                    title=dict(
+                        text='Investors',
+                        standoff=25,
+                        font=dict(size=16, color='rgb(30, 30, 30)')
+                    ),
+                    showgrid=False,
+                    zeroline=False,
+                    tickfont=dict(size=14, color='rgb(50, 50, 50)')
+                ),
                 showlegend=False,
             )
             st.plotly_chart(fig_, use_container_width=True)
@@ -4054,6 +4124,9 @@ elif page == "Sectoral & Regional Analysis":
     display_stage_sector_deal_count_analysis()
     
     display_ecosystem_sector_trends()
+    
+    # Add the new ecosystem contribution heatmap
+    display_sector_ecosystem_contribution_heatmap(analysis)
     
     st.subheader("📊 Sector Funding Patterns")
     st.markdown(
@@ -4525,3 +4598,291 @@ else:
            - Support international market access programs
     """
     )
+
+@st.cache_data
+def display_sector_ecosystem_contribution_heatmap():
+    """Display heatmap of ecosystem contributions to each sector."""
+    st.header("Ecosystem Contribution by Sector")
+    st.markdown(
+        """
+        <div class='insight-box'>
+        Heatmap visualization showing how much each ecosystem contributes to different sectors.
+        This reveals which ecosystems are the major contributors to specific sectors.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    companies_df = pd.DataFrame(analysis['raw_data']['companies'])
+    
+    top_sectors = companies_df['primaryTag'].value_counts().head(10).index.tolist()
+    top_ecosystems = companies_df['ecosystemName'].value_counts().head(10).index.tolist()
+    
+    filtered_df = companies_df[
+        (companies_df['primaryTag'].isin(top_sectors)) & 
+        (companies_df['ecosystemName'].isin(top_ecosystems))
+    ]
+    
+    sector_ecosystem_counts = pd.crosstab(
+        filtered_df['ecosystemName'], 
+        filtered_df['primaryTag']
+    )
+    
+    # Calculate percentages by column (sector) instead of by row (ecosystem)
+    sector_ecosystem_pct = sector_ecosystem_counts.div(sector_ecosystem_counts.sum(axis=0)) * 100
+    
+    fig = go.Figure(data=go.Heatmap(
+        z=sector_ecosystem_pct.values,
+        x=sector_ecosystem_pct.columns,
+        y=sector_ecosystem_pct.index,
+        colorscale='Viridis',
+        text=sector_ecosystem_pct.round(1).values,
+        texttemplate="%{text}%",
+        textfont={"size": 12},
+        hoverongaps=False,
+        colorbar=dict(
+            title=dict(
+                text="Percentage",
+                font=dict(size=14)
+            ),
+            ticksuffix="%"
+        )
+    ))
+    
+    fig.update_layout(
+        title=dict(
+            text='ECOSYSTEM CONTRIBUTION TO SECTORS',
+            font=dict(size=20, color='rgb(2, 33, 105)'),
+            x=0.5,
+            y=0.95
+        ),
+        xaxis=dict(
+            title=dict(
+                text="Sector",
+                font=dict(size=16, color='rgb(50, 50, 50)')
+            ),
+            tickangle=-45,
+            tickfont=dict(size=14, color='rgb(50, 50, 50)')
+        ),
+        yaxis=dict(
+            title=dict(
+                text="Ecosystem",
+                font=dict(size=16, color='rgb(50, 50, 50)')
+            ),
+            tickfont=dict(size=14, color='rgb(50, 50, 50)')
+        ),
+        height=700,
+        template='plotly_white',
+        margin=dict(t=100, b=150, l=150, r=50)
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+    create_download_buttons(fig, "sector_ecosystem_contribution_heatmap")
+    
+    st.subheader("🔍 Key Insights")
+    
+    # Find top contributors for each sector
+    sector_leaders = {}
+    for sector in sector_ecosystem_pct.columns:
+        top_ecosystem = sector_ecosystem_pct[sector].idxmax()
+        top_pct = sector_ecosystem_pct[sector][top_ecosystem]
+        sector_leaders[sector] = (top_ecosystem, top_pct)
+    
+    # Find sectors where ecosystems are dominant
+    ecosystem_strengths = {}
+    for ecosystem in sector_ecosystem_pct.index:
+        top_sector = sector_ecosystem_pct.loc[ecosystem].idxmax()
+        top_pct = sector_ecosystem_pct.loc[ecosystem, top_sector]
+        ecosystem_strengths[ecosystem] = (top_sector, top_pct)
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("#### Leading Contributors by Sector")
+        for sector, (ecosystem, pct) in sorted(sector_leaders.items(), key=lambda x: x[1][1], reverse=True)[:5]:
+            st.markdown(f"- **{sector}**: {ecosystem} ({pct:.1f}%)")
+    
+    with col2:
+        st.markdown("#### Ecosystem Leadership Areas")
+        for ecosystem, (sector, pct) in sorted(ecosystem_strengths.items(), key=lambda x: x[1][1], reverse=True)[:5]:
+            st.markdown(f"- **{ecosystem}**: {sector} ({pct:.1f}%)")
+    
+    st.markdown("#### Market Concentration Analysis")
+    
+    # Calculate concentration metrics for each sector
+    concentration_metrics = {}
+    for sector in sector_ecosystem_pct.columns:
+        contributions = sector_ecosystem_pct[sector].sort_values(ascending=False)
+        top_3_share = contributions[:3].sum()
+        concentration_metrics[sector] = top_3_share
+    
+    st.markdown("**Top 3 Most Concentrated Sectors:**")
+    for sector, concentration in sorted(concentration_metrics.items(), reverse=True)[:3]:
+        st.markdown(f"- **{sector}**: Top 3 ecosystems account for {concentration:.1f}% of companies")
+
+@st.cache_data
+def display_top_investors_series_distribution():
+    """Display funding series distribution for top 10 investors."""
+    st.header("📈 Top Investors' Funding Series Distribution")
+    st.markdown(
+        """
+        <div class='insight-box'>
+        Analysis of investment distribution across different funding series for the top 10 most active investors.
+        This visualization helps understand the investment focus of leading firms across different stages.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # Get the deals data
+    deals_df = pd.DataFrame(analysis['raw_data']['deals'])
+    
+    # Process the data to get top 10 investors and their series distribution
+    investor_series_counts = []
+    for investor in deals_df['investors'].explode():
+        if isinstance(investor, str):
+            investor_series_counts.append({
+                'investor': investor,
+                'series': deals_df.loc[deals_df['investors'].apply(lambda x: investor in x if isinstance(x, list) else False)]['series'].iloc[0]
+            })
+    
+    # Convert to DataFrame
+    investor_series_df = pd.DataFrame(investor_series_counts)
+    
+    # Get top 10 investors by deal count
+    top_investors = investor_series_df['investor'].value_counts().head(10).index
+    
+    # Filter for top investors and get their series distribution
+    top_investors_data = investor_series_df[investor_series_df['investor'].isin(top_investors)]
+    series_dist = pd.crosstab(top_investors_data['investor'], top_investors_data['series'])
+    
+    # Create the visualization using plotly
+    series_colors = {
+        'Seed': '#1f77b4',
+        'Series A': '#2ca02c',
+        'Series B': '#ff7f0e',
+        'Series C': '#d62728',
+        'Series D': '#9467bd',
+        'Series E': '#8c564b',
+        'Series F': '#e377c2',
+        'Series G': '#7f7f7f',
+        'Series H': '#bcbd22',
+        'Other': '#17becf'
+    }
+    
+    fig = go.Figure()
+    
+    # Add bars for each series
+    for series in series_dist.columns:
+        fig.add_trace(go.Bar(
+            name=series,
+            y=series_dist.index,
+            x=series_dist[series],
+            orientation='h',
+            marker_color=series_colors.get(series, '#17becf')
+        ))
+    
+    fig.update_layout(
+        title='Funding Series Distribution by Top Investors',
+        barmode='stack',
+        yaxis={'categoryorder': 'total ascending'},
+        xaxis_title='Number of Deals',
+        height=600,
+        margin=dict(l=250, r=50, t=100, b=50),
+        plot_bgcolor='white',
+        font=dict(size=14, color='rgb(50, 50, 50)')
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+    create_download_buttons(fig, "top_investors_series_distribution", width=1600, height=600)
+
+@st.cache_data
+def display_top_investors_series_amount_distribution():
+    """Display funding series distribution by investment amount for top 10 investors."""
+    st.header("💰 Top Investors' Funding Series Amount Distribution")
+    st.markdown(
+        """
+        <div class='insight-box'>
+        Analysis of total investment amounts across different funding series for the top 10 most active investors.
+        This visualization helps understand the capital deployment of leading firms across different stages.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # Get the deals data
+    deals_df = pd.DataFrame(analysis['raw_data']['deals'])
+    
+    # Process the data to get top 10 investors and their series distribution with amounts
+    investor_series_amounts = []
+    for investor in deals_df['investors'].explode():
+        if isinstance(investor, str):
+            deal = deals_df.loc[deals_df['investors'].apply(lambda x: investor in x if isinstance(x, list) else False)].iloc[0]
+            investor_series_amounts.append({
+                'investor': investor,
+                'series': deal['series'],
+                'amount': deal['amount'] if pd.notnull(deal['amount']) else 0
+            })
+    
+    # Convert to DataFrame
+    investor_series_df = pd.DataFrame(investor_series_amounts)
+    
+    # Get top 10 investors by total investment amount
+    top_investors = (
+        investor_series_df.groupby('investor')['amount']
+        .sum()
+        .sort_values(ascending=False)
+        .head(10)
+        .index
+    )
+    
+    # Filter for top investors and get their series distribution
+    top_investors_data = investor_series_df[investor_series_df['investor'].isin(top_investors)]
+    series_dist = pd.pivot_table(
+        top_investors_data,
+        values='amount',
+        index='investor',
+        columns='series',
+        aggfunc='sum',
+        fill_value=0
+    )
+    
+    # Create the visualization using plotly
+    series_colors = {
+        'Seed': '#1f77b4',
+        'Series A': '#2ca02c',
+        'Series B': '#ff7f0e',
+        'Series C': '#d62728',
+        'Series D': '#9467bd',
+        'Series E': '#8c564b',
+        'Series F': '#e377c2',
+        'Series G': '#7f7f7f',
+        'Series H': '#bcbd22',
+        'Other': '#17becf'
+    }
+    
+    fig = go.Figure()
+    
+    # Add bars for each series
+    for series in series_dist.columns:
+        fig.add_trace(go.Bar(
+            name=series,
+            y=series_dist.index,
+            x=series_dist[series] / 1e6,  # Convert to millions
+            orientation='h',
+            marker_color=series_colors.get(series, '#17becf')
+        ))
+    
+    fig.update_layout(
+        title='Funding Series Distribution by Top Investors (Investment Amount)',
+        barmode='stack',
+        yaxis={'categoryorder': 'total ascending'},
+        xaxis_title='Total Investment Amount (Millions USD)',
+        height=600,
+        margin=dict(l=250, r=50, t=100, b=50),
+        plot_bgcolor='white',
+        font=dict(size=14, color='rgb(50, 50, 50)')
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+    create_download_buttons(fig, "top_investors_series_amount_distribution", width=1600, height=600)
