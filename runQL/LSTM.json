@@ -1,0 +1,109 @@
+{
+  "training_logs": [
+    {"epoch": 0, "loss": 0.699888},
+    {"epoch": 1, "loss": 0.691567},
+    {"epoch": 2, "loss": 0.598909},
+    {"epoch": 3, "loss": 0.553608},
+    {"epoch": 4, "loss": 0.548851},
+    {"epoch": 5, "loss": 0.507998},
+    {"epoch": 6, "loss": 0.463610},
+    {"epoch": 7, "loss": 0.477898},
+    {"epoch": 8, "loss": 0.498101},
+    {"epoch": 9, "loss": 0.435945},
+    {"epoch": 10, "loss": 0.396903},
+    {"epoch": 11, "loss": 0.419662},
+    {"epoch": 12, "loss": 0.387209},
+    {"epoch": 13, "loss": 0.365414},
+    {"epoch": 14, "loss": 0.430414},
+    {"epoch": 15, "loss": 0.362977},
+    {"epoch": 16, "loss": 0.368422},
+    {"epoch": 17, "loss": 0.362035},
+    {"epoch": 18, "loss": 0.340164},
+    {"epoch": 19, "loss": 0.357833},
+    {"epoch": 20, "loss": 0.365873},
+    {"epoch": 21, "loss": 0.365693},
+    {"epoch": 22, "loss": 0.296920},
+    {"epoch": 23, "loss": 0.350301},
+    {"epoch": 24, "loss": 0.325338},
+    {"epoch": 25, "loss": 0.311723},
+    {"epoch": 26, "loss": 0.326602},
+    {"epoch": 27, "loss": 0.340157},
+    {"epoch": 28, "loss": 0.296294},
+    {"epoch": 29, "loss": 0.305691},
+    {"epoch": 30, "loss": 0.286537},
+    {"epoch": 31, "loss": 0.349371},
+    {"epoch": 32, "loss": 0.315126},
+    {"epoch": 33, "loss": 0.316940},
+    {"epoch": 34, "loss": 0.306850},
+    {"epoch": 35, "loss": 0.361479},
+    {"epoch": 36, "loss": 0.293210},
+    {"epoch": 37, "loss": 0.310107},
+    {"epoch": 38, "loss": 0.329143},
+    {"epoch": 39, "loss": 0.311303},
+    {"epoch": 40, "loss": 0.300455}
+  ],
+  "model_insights": {
+    "model_metrics": {
+      "custom_lstm": {
+        "mean_absolute_error": 38704149.32631424,
+        "mean_squared_error": 3378073265670913.5,
+        "root_mean_squared_error": 58121194.633893356,
+        "r2_score": -0.3224472199883377,
+        "mape": "Infinity",
+        "explained_variance": -0.32185711169703346,
+        "cv_scores_mean": 0.0,
+        "cv_scores_std": 0.0
+      }
+    },
+    "best_model": "custom_lstm",
+    "feature_importance": {}
+  },
+  "predictions": [
+    {
+      "company": "Masthead Data ",
+      "current_round": "Pre-Seed", 
+      "next_round": "Seed",
+      "predicted_funding": -20039698.955222636,
+      "ecosystem": "Toronto",
+      "primary_tag": "Analytics"
+    },
+    {
+      "company": "Bench IQ",
+      "current_round": "Pre-Seed",
+      "next_round": "Seed", 
+      "predicted_funding": -16019522.39877893,
+      "ecosystem": "Toronto",
+      "primary_tag": "LegalTech"
+    },
+    {
+      "company": "Avicanna",
+      "current_round": "Series ?",
+      "next_round": "Unknown",
+      "predicted_funding": 23251605.428783774,
+      "ecosystem": "Toronto", 
+      "primary_tag": "BioTech"
+    },
+    {
+      "company": "Tailscale",
+      "current_round": "Seed",
+      "next_round": "Series A",
+      "predicted_funding": 64817021.38165164,
+      "ecosystem": "Toronto",
+      "primary_tag": "CyberSecurity"
+    },
+    {
+      "company": "Lexop",
+      "current_round": "Seed",
+      "next_round": "Series A",
+      "predicted_funding": 9278721.942417003,
+      "ecosystem": "Quebec",
+      "primary_tag": "FinTech"
+    }
+  ],
+  "dataset_stats": {
+    "total_companies": 1902,
+    "total_deals": 2749,
+    "total_investors": 2263,
+    "ecosystems": 9
+  }
+}

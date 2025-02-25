@@ -1,0 +1,1380 @@
+{
+  "dataset_stats": {
+    "total_companies": 1902,
+    "total_deals": 2749,
+    "total_investors": 2263,
+    "ecosystems": 9
+  },
+  "sector_growth_analysis": [
+    {
+      "sector": "3DTech",
+      "stage": "Series A", 
+      "growth_rate_amount": -4.994165694282381,
+      "growth_rate_deals": 3.6363636363636354,
+      "is_declining": false,
+      "growth_probability": 0.36,
+      "total_amount_last_quarter": 30000000.0,
+      "deal_count_last_quarter": 3
+    },
+    {
+      "sector": "AI",
+      "stage": "Pre-Seed",
+      "growth_rate_amount": 14.70384030517254,
+      "growth_rate_deals": -6.199460916442049,
+      "is_declining": false,
+      "growth_probability": 0.08,
+      "total_amount_last_quarter": 3900000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "AI",
+      "stage": "Seed",
+      "growth_rate_amount": 2.447766684806545,
+      "growth_rate_deals": -2.949233548988752,
+      "is_declining": false,
+      "growth_probability": 0.98,
+      "total_amount_last_quarter": 21300000.0,
+      "deal_count_last_quarter": 6
+    },
+    {
+      "sector": "AI",
+      "stage": "Series ?",
+      "growth_rate_amount": 30.47796078450454,
+      "growth_rate_deals": 5.5102040816326525,
+      "is_declining": false,
+      "growth_probability": 0.02,
+      "total_amount_last_quarter": 12200000.0,
+      "deal_count_last_quarter": 2
+    },
+    {
+      "sector": "AI",
+      "stage": "Series A",
+      "growth_rate_amount": -6.547870077341318,
+      "growth_rate_deals": -9.36957779063042,
+      "is_declining": true,
+      "growth_probability": 0.0,
+      "total_amount_last_quarter": 5497720.0,
+      "deal_count_last_quarter": 2
+    },
+    {
+      "sector": "AI",
+      "stage": "Series B",
+      "growth_rate_amount": -15.433874044463087,
+      "growth_rate_deals": -5.827505827505829,
+      "is_declining": true,
+      "growth_probability": 0.94,
+      "total_amount_last_quarter": 184000000.0,
+      "deal_count_last_quarter": 4
+    },
+    {
+      "sector": "AI",
+      "stage": "Series C",
+      "growth_rate_amount": 31.605689084149624,
+      "growth_rate_deals": 3.695614177449159e-15,
+      "is_declining": false,
+      "growth_probability": 0.96,
+      "total_amount_last_quarter": 1441206000.0,
+      "deal_count_last_quarter": 4
+    },
+    {
+      "sector": "AdTech",
+      "stage": "Pre-Seed",
+      "growth_rate_amount": 65.62193445862678,
+      "growth_rate_deals": -23.999999999999993,
+      "is_declining": false,
+      "growth_probability": 0.14,
+      "total_amount_last_quarter": 921095.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "AdTech",
+      "stage": "Seed",
+      "growth_rate_amount": -35.11039245931658,
+      "growth_rate_deals": -46.666666666666664,
+      "is_declining": true,
+      "growth_probability": 0.86,
+      "total_amount_last_quarter": 1915740.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "AdTech",
+      "stage": "Series ?",
+      "growth_rate_amount": 85.10822876958116,
+      "growth_rate_deals": 0.0,
+      "is_declining": false,
+      "growth_probability": 1.0,
+      "total_amount_last_quarter": 235000000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "AgTech",
+      "stage": "Pre-Seed",
+      "growth_rate_amount": 53.896103896103895,
+      "growth_rate_deals": 0.0,
+      "is_declining": false,
+      "growth_probability": 0.1,
+      "total_amount_last_quarter": 300000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "AgTech",
+      "stage": "Seed",
+      "growth_rate_amount": 8.868673180946567,
+      "growth_rate_deals": 2.1179401993355476,
+      "is_declining": false,
+      "growth_probability": 0.32,
+      "total_amount_last_quarter": 2700000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "AgTech",
+      "stage": "Series ?",
+      "growth_rate_amount": 3.0913691596583206,
+      "growth_rate_deals": 1.8750000000000007,
+      "is_declining": false,
+      "growth_probability": 0.06,
+      "total_amount_last_quarter": 0.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "AgTech",
+      "stage": "Series A",
+      "growth_rate_amount": -6.165002430339933,
+      "growth_rate_deals": -18.633540372670815,
+      "is_declining": true,
+      "growth_probability": 0.0,
+      "total_amount_last_quarter": 3000000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "AgTech",
+      "stage": "Series B",
+      "growth_rate_amount": -39.4369420920119,
+      "growth_rate_deals": 2.7006411296743853e-15,
+      "is_declining": false,
+      "growth_probability": 0.8,
+      "total_amount_last_quarter": 9100000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "Analytics",
+      "stage": "Pre-Seed",
+      "growth_rate_amount": 36.96035785015268,
+      "growth_rate_deals": -21.66666666666667,
+      "is_declining": false,
+      "growth_probability": 0.96,
+      "total_amount_last_quarter": 1300000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "Analytics",
+      "stage": "Seed",
+      "growth_rate_amount": -8.117653008690038,
+      "growth_rate_deals": -9.604519774011301,
+      "is_declining": true,
+      "growth_probability": 0.98,
+      "total_amount_last_quarter": 4500000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "Analytics",
+      "stage": "Series ?",
+      "growth_rate_amount": 20.2098057935029,
+      "growth_rate_deals": -4.615384615384617,
+      "is_declining": false,
+      "growth_probability": 0.0,
+      "total_amount_last_quarter": 6000000.0,
+      "deal_count_last_quarter": 3
+    },
+    {
+      "sector": "Analytics",
+      "stage": "Series A",
+      "growth_rate_amount": 5.52211354435354,
+      "growth_rate_deals": -4.524886877828054,
+      "is_declining": false,
+      "growth_probability": 0.96,
+      "total_amount_last_quarter": 92400000.0,
+      "deal_count_last_quarter": 3
+    },
+    {
+      "sector": "Analytics",
+      "stage": "Series B",
+      "growth_rate_amount": -1.0532904227273507,
+      "growth_rate_deals": -16.541353383458652,
+      "is_declining": true,
+      "growth_probability": 0.88,
+      "total_amount_last_quarter": 33106750.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "Analytics",
+      "stage": "Series C",
+      "growth_rate_amount": -45.600198566804664,
+      "growth_rate_deals": -13.33333333333333,
+      "is_declining": true,
+      "growth_probability": 0.04,
+      "total_amount_last_quarter": 0.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "BioTech",
+      "stage": "Pre-Seed",
+      "growth_rate_amount": 6.368597197404359,
+      "growth_rate_deals": -5.8741258741258715,
+      "is_declining": false,
+      "growth_probability": 0.0,
+      "total_amount_last_quarter": 4400000.0,
+      "deal_count_last_quarter": 2
+    },
+    {
+      "sector": "BioTech",
+      "stage": "Seed",
+      "growth_rate_amount": 1.1220876926227161,
+      "growth_rate_deals": -2.7153558052434468,
+      "is_declining": false,
+      "growth_probability": 1.0,
+      "total_amount_last_quarter": 27641620.0,
+      "deal_count_last_quarter": 6
+    },
+    {
+      "sector": "BioTech",
+      "stage": "Series ?",
+      "growth_rate_amount": 8.069152282251373,
+      "growth_rate_deals": -2.780748663101602,
+      "is_declining": false,
+      "growth_probability": 0.98,
+      "total_amount_last_quarter": 35700000.0,
+      "deal_count_last_quarter": 9
+    },
+    {
+      "sector": "BioTech",
+      "stage": "Series A",
+      "growth_rate_amount": 4.021580859924233,
+      "growth_rate_deals": 3.4443168771526977,
+      "is_declining": false,
+      "growth_probability": 0.28,
+      "total_amount_last_quarter": 11000000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "BioTech",
+      "stage": "Series B",
+      "growth_rate_amount": -6.982988758048229,
+      "growth_rate_deals": -4.190476190476189,
+      "is_declining": true,
+      "growth_probability": 0.74,
+      "total_amount_last_quarter": 660000000.0,
+      "deal_count_last_quarter": 4
+    },
+    {
+      "sector": "Blockchain",
+      "stage": "Pre-Seed",
+      "growth_rate_amount": -13.468885647207834,
+      "growth_rate_deals": -13.33333333333333,
+      "is_declining": true,
+      "growth_probability": 0.96,
+      "total_amount_last_quarter": 1644000.0,
+      "deal_count_last_quarter": 2
+    },
+    {
+      "sector": "Blockchain",
+      "stage": "Seed",
+      "growth_rate_amount": 0.38372899239450753,
+      "growth_rate_deals": -10.948191593352883,
+      "is_declining": false,
+      "growth_probability": 1.0,
+      "total_amount_last_quarter": 18200000.0,
+      "deal_count_last_quarter": 2
+    },
+    {
+      "sector": "Blockchain",
+      "stage": "Series ?",
+      "growth_rate_amount": 30.572609339650015,
+      "growth_rate_deals": -15.167548500881836,
+      "is_declining": false,
+      "growth_probability": 0.02,
+      "total_amount_last_quarter": 6838325.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "CleanTech",
+      "stage": "Grant",
+      "growth_rate_amount": 105.64768399021231,
+      "growth_rate_deals": -23.999999999999993,
+      "is_declining": false,
+      "growth_probability": 0.5,
+      "total_amount_last_quarter": 57300000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "CleanTech",
+      "stage": "Pre-Seed",
+      "growth_rate_amount": 54.369248386060164,
+      "growth_rate_deals": 10.90909090909091,
+      "is_declining": false,
+      "growth_probability": 0.32,
+      "total_amount_last_quarter": 4000000.0,
+      "deal_count_last_quarter": 2
+    },
+    {
+      "sector": "CleanTech",
+      "stage": "Seed",
+      "growth_rate_amount": 2.310821420774306,
+      "growth_rate_deals": -3.3496732026143796,
+      "is_declining": false,
+      "growth_probability": 0.64,
+      "total_amount_last_quarter": 18200000.0,
+      "deal_count_last_quarter": 2
+    },
+    {
+      "sector": "CleanTech",
+      "stage": "Series ?",
+      "growth_rate_amount": 5.851332256530538,
+      "growth_rate_deals": 0.043290043290043226,
+      "is_declining": false,
+      "growth_probability": 0.94,
+      "total_amount_last_quarter": 175000000.0,
+      "deal_count_last_quarter": 5
+    },
+    {
+      "sector": "CleanTech",
+      "stage": "Series A",
+      "growth_rate_amount": 12.365791265831383,
+      "growth_rate_deals": 4.804318488529014,
+      "is_declining": false,
+      "growth_probability": 0.3,
+      "total_amount_last_quarter": 31600000.0,
+      "deal_count_last_quarter": 2
+    },
+    {
+      "sector": "CleanTech",
+      "stage": "Series B",
+      "growth_rate_amount": 16.490248365393818,
+      "growth_rate_deals": 11.250000000000005,
+      "is_declining": false,
+      "growth_probability": 0.06,
+      "total_amount_last_quarter": 2000000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "ConstructionTech",
+      "stage": "Seed",
+      "growth_rate_amount": -8.717678011070973,
+      "growth_rate_deals": -7.999999999999999,
+      "is_declining": true,
+      "growth_probability": 0.4,
+      "total_amount_last_quarter": 1200000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "Cryptocurrency",
+      "stage": "Seed",
+      "growth_rate_amount": -77.80554640243,
+      "growth_rate_deals": -49.99999999999999,
+      "is_declining": true,
+      "growth_probability": 0.22,
+      "total_amount_last_quarter": 1919467.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "CyberSecurity",
+      "stage": "Pre-Seed",
+      "growth_rate_amount": 20.219276714122074,
+      "growth_rate_deals": -7.142857142857142,
+      "is_declining": false,
+      "growth_probability": 1.0,
+      "total_amount_last_quarter": 6000000.0,
+      "deal_count_last_quarter": 3
+    },
+    {
+      "sector": "CyberSecurity",
+      "stage": "Seed",
+      "growth_rate_amount": 9.192260286730953,
+      "growth_rate_deals": 0.5429864253393665,
+      "is_declining": false,
+      "growth_probability": 0.12,
+      "total_amount_last_quarter": 5000000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "CyberSecurity",
+      "stage": "Series ?",
+      "growth_rate_amount": -15.409009050045446,
+      "growth_rate_deals": -4.285714285714288,
+      "is_declining": true,
+      "growth_probability": 0.96,
+      "total_amount_last_quarter": 46827280.0,
+      "deal_count_last_quarter": 4
+    },
+    {
+      "sector": "CyberSecurity",
+      "stage": "Series A",
+      "growth_rate_amount": -69.5542334475127,
+      "growth_rate_deals": -26.24999999999999,
+      "is_declining": true,
+      "growth_probability": 0.14,
+      "total_amount_last_quarter": 5000000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "CyberSecurity",
+      "stage": "Series B",
+      "growth_rate_amount": -12.080562682478984,
+      "growth_rate_deals": -17.14285714285714,
+      "is_declining": true,
+      "growth_probability": 0.84,
+      "total_amount_last_quarter": 120000000.0,
+      "deal_count_last_quarter": 4
+    },
+    {
+      "sector": "Data",
+      "stage": "Seed",
+      "growth_rate_amount": 28.29275162217144,
+      "growth_rate_deals": -5.26315789473684,
+      "is_declining": false,
+      "growth_probability": 0.88,
+      "total_amount_last_quarter": 57000000.0,
+      "deal_count_last_quarter": 3
+    },
+    {
+      "sector": "DevTech",
+      "stage": "Pre-Seed",
+      "growth_rate_amount": 62.20602069614297,
+      "growth_rate_deals": 18.749999999999993,
+      "is_declining": false,
+      "growth_probability": 0.86,
+      "total_amount_last_quarter": 18000000.0,
+      "deal_count_last_quarter": 6
+    },
+    {
+      "sector": "DevTech",
+      "stage": "Seed",
+      "growth_rate_amount": 9.548455212225218,
+      "growth_rate_deals": 5.342624854819981,
+      "is_declining": false,
+      "growth_probability": 0.22,
+      "total_amount_last_quarter": 7600000.0,
+      "deal_count_last_quarter": 2
+    },
+    {
+      "sector": "DevTech",
+      "stage": "Series A",
+      "growth_rate_amount": -36.32925253166579,
+      "growth_rate_deals": -22.727272727272723,
+      "is_declining": true,
+      "growth_probability": 0.04,
+      "total_amount_last_quarter": 1500000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "EdTech",
+      "stage": "Pre-Seed",
+      "growth_rate_amount": 93.5472236339492,
+      "growth_rate_deals": 12.499999999999998,
+      "is_declining": false,
+      "growth_probability": 0.78,
+      "total_amount_last_quarter": 2700000.0,
+      "deal_count_last_quarter": 2
+    },
+    {
+      "sector": "EdTech",
+      "stage": "Seed",
+      "growth_rate_amount": -0.06504996094650967,
+      "growth_rate_deals": -7.144207144207142,
+      "is_declining": true,
+      "growth_probability": 0.96,
+      "total_amount_last_quarter": 15000000.0,
+      "deal_count_last_quarter": 3
+    },
+    {
+      "sector": "EdTech",
+      "stage": "Series ?",
+      "growth_rate_amount": 76.91683216776634,
+      "growth_rate_deals": -27.272727272727277,
+      "is_declining": false,
+      "growth_probability": 0.96,
+      "total_amount_last_quarter": 125000000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "EdTech",
+      "stage": "Series A",
+      "growth_rate_amount": 3.2815816772244313,
+      "growth_rate_deals": 8.1203007518797,
+      "is_declining": false,
+      "growth_probability": 0.04,
+      "total_amount_last_quarter": 29859500.0,
+      "deal_count_last_quarter": 4
+    },
+    {
+      "sector": "FinTech",
+      "stage": "Pre-Seed",
+      "growth_rate_amount": 9.20145813908925,
+      "growth_rate_deals": -1.7224880382775125,
+      "is_declining": false,
+      "growth_probability": 0.88,
+      "total_amount_last_quarter": 3000000.0,
+      "deal_count_last_quarter": 2
+    },
+    {
+      "sector": "FinTech",
+      "stage": "Seed",
+      "growth_rate_amount": -2.0309302967810976,
+      "growth_rate_deals": -1.9480519480519487,
+      "is_declining": true,
+      "growth_probability": 0.94,
+      "total_amount_last_quarter": 12800000.0,
+      "deal_count_last_quarter": 2
+    },
+    {
+      "sector": "FinTech",
+      "stage": "Series ?",
+      "growth_rate_amount": 8.156161561012663,
+      "growth_rate_deals": 2.122954444935869,
+      "is_declining": false,
+      "growth_probability": 0.98,
+      "total_amount_last_quarter": 1495600000.0,
+      "deal_count_last_quarter": 9
+    },
+    {
+      "sector": "FinTech",
+      "stage": "Series A",
+      "growth_rate_amount": 3.3423569517425413,
+      "growth_rate_deals": 2.241913099177964,
+      "is_declining": false,
+      "growth_probability": 0.22,
+      "total_amount_last_quarter": 10500000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "FinTech",
+      "stage": "Series B",
+      "growth_rate_amount": -3.732267094732325,
+      "growth_rate_deals": -6.823053107882828,
+      "is_declining": true,
+      "growth_probability": 1.0,
+      "total_amount_last_quarter": 239000000.0,
+      "deal_count_last_quarter": 4
+    },
+    {
+      "sector": "FinTech",
+      "stage": "Series C",
+      "growth_rate_amount": -12.408600235503508,
+      "growth_rate_deals": -21.315789473684212,
+      "is_declining": true,
+      "growth_probability": 0.96,
+      "total_amount_last_quarter": 255000000.0,
+      "deal_count_last_quarter": 3
+    },
+    {
+      "sector": "FinTech",
+      "stage": "Series D",
+      "growth_rate_amount": -6.238227896772427,
+      "growth_rate_deals": 1.1428571428571446,
+      "is_declining": false,
+      "growth_probability": 0.9,
+      "total_amount_last_quarter": 362000000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "FitnessTech",
+      "stage": "Seed",
+      "growth_rate_amount": 35.95471119799906,
+      "growth_rate_deals": 6.857142857142858,
+      "is_declining": false,
+      "growth_probability": 0.12,
+      "total_amount_last_quarter": 16499875.0,
+      "deal_count_last_quarter": 5
+    },
+    {
+      "sector": "FoodTech",
+      "stage": "Seed",
+      "growth_rate_amount": 34.988290398126466,
+      "growth_rate_deals": -17.142857142857146,
+      "is_declining": false,
+      "growth_probability": 0.5599999999999999,
+      "total_amount_last_quarter": 8000000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "Games",
+      "stage": "Seed",
+      "growth_rate_amount": 8.27493340677248,
+      "growth_rate_deals": 16.541353383458652,
+      "is_declining": false,
+      "growth_probability": 0.7,
+      "total_amount_last_quarter": 8417550.0,
+      "deal_count_last_quarter": 3
+    },
+    {
+      "sector": "Games",
+      "stage": "Series ?",
+      "growth_rate_amount": -33.24734118085904,
+      "growth_rate_deals": 17.142857142857146,
+      "is_declining": false,
+      "growth_probability": 0.04,
+      "total_amount_last_quarter": 6000000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "GeoTech",
+      "stage": "Seed",
+      "growth_rate_amount": 44.40796726854006,
+      "growth_rate_deals": 20.259740259740262,
+      "is_declining": false,
+      "growth_probability": 0.74,
+      "total_amount_last_quarter": 6412000.0,
+      "deal_count_last_quarter": 4
+    },
+    {
+      "sector": "GreenTech",
+      "stage": "Series ?",
+      "growth_rate_amount": 42.43996757619843,
+      "growth_rate_deals": -18.749999999999993,
+      "is_declining": false,
+      "growth_probability": 1.0,
+      "total_amount_last_quarter": 315000000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "HRTech",
+      "stage": "Pre-Seed",
+      "growth_rate_amount": -16.56448394703428,
+      "growth_rate_deals": -5.714285714285713,
+      "is_declining": true,
+      "growth_probability": 0.4,
+      "total_amount_last_quarter": 0.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "HRTech",
+      "stage": "Seed",
+      "growth_rate_amount": 2.2777070852004484,
+      "growth_rate_deals": 2.3076923076923084,
+      "is_declining": false,
+      "growth_probability": 0.1,
+      "total_amount_last_quarter": 2900000.0,
+      "deal_count_last_quarter": 2
+    },
+    {
+      "sector": "HRTech",
+      "stage": "Series ?",
+      "growth_rate_amount": 28.615226700097494,
+      "growth_rate_deals": 0.0,
+      "is_declining": false,
+      "growth_probability": 0.0,
+      "total_amount_last_quarter": 8000000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "HRTech",
+      "stage": "Series A",
+      "growth_rate_amount": 12.280552164621955,
+      "growth_rate_deals": 31.999999999999996,
+      "is_declining": false,
+      "growth_probability": 0.4,
+      "total_amount_last_quarter": 22660000.0,
+      "deal_count_last_quarter": 4
+    },
+    {
+      "sector": "Hardware",
+      "stage": "Pre-Seed",
+      "growth_rate_amount": 23.95286629104329,
+      "growth_rate_deals": -31.999999999999996,
+      "is_declining": false,
+      "growth_probability": 0.4,
+      "total_amount_last_quarter": 120000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "Hardware",
+      "stage": "Seed",
+      "growth_rate_amount": 16.072768737131078,
+      "growth_rate_deals": -1.5257469802924342,
+      "is_declining": false,
+      "growth_probability": 0.24,
+      "total_amount_last_quarter": 2600000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "Hardware",
+      "stage": "Series ?",
+      "growth_rate_amount": 35.07297451536639,
+      "growth_rate_deals": -1.515151515151515,
+      "is_declining": false,
+      "growth_probability": 0.92,
+      "total_amount_last_quarter": 314200000.0,
+      "deal_count_last_quarter": 2
+    },
+    {
+      "sector": "Hardware", 
+      "stage": "Series A",
+      "growth_rate_amount": 20.322397117390476,
+      "growth_rate_deals": -7.346938775510203,
+      "is_declining": false,
+      "growth_probability": 1.0,
+      "total_amount_last_quarter": 20000000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "Hardware",
+      "stage": "Series B",
+      "growth_rate_amount": 27.930574098798388,
+      "growth_rate_deals": -4.444444444444443,
+      "is_declining": false,
+      "growth_probability": 0.76,
+      "total_amount_last_quarter": 68000000.0,
+      "deal_count_last_quarter": 2
+    },
+    {
+      "sector": "HealthTech",
+      "stage": "Pre-Seed",
+      "growth_rate_amount": 7.2425526832624705,
+      "growth_rate_deals": -1.440329218106997,
+      "is_declining": false,
+      "growth_probability": 0.16,
+      "total_amount_last_quarter": 1100000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "HealthTech",
+      "stage": "Seed",
+      "growth_rate_amount": 0.3055591493609897,
+      "growth_rate_deals": -5.935127674258109,
+      "is_declining": false,
+      "growth_probability": 1.0,
+      "total_amount_last_quarter": 23000000.0,
+      "deal_count_last_quarter": 4
+    },
+    {
+      "sector": "HealthTech",
+      "stage": "Series ?",
+      "growth_rate_amount": -4.517006722408845,
+      "growth_rate_deals": -0.7440476190476197,
+      "is_declining": true,
+      "growth_probability": 0.64,
+      "total_amount_last_quarter": 26900000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "HealthTech",
+      "stage": "Series A",
+      "growth_rate_amount": -3.2715117121533805,
+      "growth_rate_deals": -3.2478632478632474,
+      "is_declining": true,
+      "growth_probability": 0.34,
+      "total_amount_last_quarter": 38.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "HealthTech",
+      "stage": "Series B",
+      "growth_rate_amount": -2.724427111294404,
+      "growth_rate_deals": -3.78645744499403,
+      "is_declining": true,
+      "growth_probability": 0.12,
+      "total_amount_last_quarter": 135000000.0,
+      "deal_count_last_quarter": 3
+    },
+    {
+      "sector": "HealthTech",
+      "stage": "Series C",
+      "growth_rate_amount": 10.159625678150963,
+      "growth_rate_deals": 1.5584415584415603,
+      "is_declining": false,
+      "growth_probability": 1.0,
+      "total_amount_last_quarter": 81659400.0,
+      "deal_count_last_quarter": 3
+    },
+    {
+      "sector": "InsurTech",
+      "stage": "Seed",
+      "growth_rate_amount": 0.2442615185692522,
+      "growth_rate_deals": 1.3186813186813184,
+      "is_declining": false,
+      "growth_probability": 0.0,
+      "total_amount_last_quarter": 7000000.0,
+      "deal_count_last_quarter": 2
+    },
+    {
+      "sector": "InsurTech",
+      "stage": "Series ?",
+      "growth_rate_amount": 18.313568971446884,
+      "growth_rate_deals": -8.33333333333333,
+      "is_declining": false,
+      "growth_probability": 0.26,
+      "total_amount_last_quarter": 12000000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "InsurTech",
+      "stage": "Series A",
+      "growth_rate_amount": -37.23180970149253,
+      "growth_rate_deals": -26.136363636363626,
+      "is_declining": true,
+      "growth_probability": 0.18,
+      "total_amount_last_quarter": 8000000.0,
+      "deal_count_last_quarter": 2
+    },
+    {
+      "sector": "LegalTech",
+      "stage": "Pre-Seed",
+      "growth_rate_amount": 61.52263374485596,
+      "growth_rate_deals": 19.99999999999999,
+      "is_declining": false,
+      "growth_probability": 0.82,
+      "total_amount_last_quarter": 8400000.0,
+      "deal_count_last_quarter": 3
+    },
+    {
+      "sector": "LegalTech",
+      "stage": "Seed",
+      "growth_rate_amount": 13.885078086974001,
+      "growth_rate_deals": -2.941176470588236,
+      "is_declining": false,
+      "growth_probability": 1.0,
+      "total_amount_last_quarter": 10500000.0,
+      "deal_count_last_quarter": 3
+    },
+    {
+      "sector": "LegalTech",
+      "stage": "Series ?",
+      "growth_rate_amount": 35.64117761730834,
+      "growth_rate_deals": -10.714285714285717,
+      "is_declining": false,
+      "growth_probability": 0.0,
+      "total_amount_last_quarter": 1000000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "LegalTech",
+      "stage": "Series A",
+      "growth_rate_amount": -13.446971493088519,
+      "growth_rate_deals": -30.76923076923076,
+      "is_declining": true,
+      "growth_probability": 0.14,
+      "total_amount_last_quarter": 34943510.0,
+      "deal_count_last_quarter": 3
+    },
+    {
+      "sector": "LogisticsTech",
+      "stage": "Pre-Seed",
+      "growth_rate_amount": 94.22010606230481,
+      "growth_rate_deals": 6.249999999999999,
+      "is_declining": false,
+      "growth_probability": 0.68,
+      "total_amount_last_quarter": 21549956.0,
+      "deal_count_last_quarter": 2
+    },
+    {
+      "sector": "LogisticsTech",
+      "stage": "Seed",
+      "growth_rate_amount": 20.060694069067246,
+      "growth_rate_deals": -2.272727272727272,
+      "is_declining": false,
+      "growth_probability": 0.78,
+      "total_amount_last_quarter": 5000000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "MarTech",
+      "stage": "Seed",
+      "growth_rate_amount": -2.1747798263443774,
+      "growth_rate_deals": -2.419354838709679,
+      "is_declining": true,
+      "growth_probability": 0.02,
+      "total_amount_last_quarter": 1000000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "MarTech",
+      "stage": "Series ?",
+      "growth_rate_amount": -30.02084894347048,
+      "growth_rate_deals": -39.99999999999999,
+      "is_declining": true,
+      "growth_probability": 0.14,
+      "total_amount_last_quarter": 7663800.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "MarTech",
+      "stage": "Series A",
+      "growth_rate_amount": 14.097278832343463,
+      "growth_rate_deals": -7.999999999999999,
+      "is_declining": false,
+      "growth_probability": 0.16,
+      "total_amount_last_quarter": 31000000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "Marketplace",
+      "stage": "Pre-Seed",
+      "growth_rate_amount": 32.144538745442226,
+      "growth_rate_deals": 3.214285714285716,
+      "is_declining": false,
+      "growth_probability": 0.06,
+      "total_amount_last_quarter": 785000.0,
+      "deal_count_last_quarter": 3
+    },
+    {
+      "sector": "Marketplace",
+      "stage": "Seed",
+      "growth_rate_amount": 7.106983547824829,
+      "growth_rate_deals": 0.31361827027461653,
+      "is_declining": false,
+      "growth_probability": 0.22,
+      "total_amount_last_quarter": 1250000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "Marketplace",
+      "stage": "Series ?",
+      "growth_rate_amount": 7.601257669959034,
+      "growth_rate_deals": 3.3124769966875225,
+      "is_declining": false,
+      "growth_probability": 0.92,
+      "total_amount_last_quarter": 70000000.0,
+      "deal_count_last_quarter": 7
+    },
+    {
+      "sector": "Marketplace",
+      "stage": "Series A",
+      "growth_rate_amount": -10.221504229680557,
+      "growth_rate_deals": -6.0000000000000036,
+      "is_declining": true,
+      "growth_probability": 0.96,
+      "total_amount_last_quarter": 48900000.0,
+      "deal_count_last_quarter": 2
+    },
+    {
+      "sector": "Marketplace",
+      "stage": "Series B",
+      "growth_rate_amount": 22.771145542291084,
+      "growth_rate_deals": -7.608695652173915,
+      "is_declining": false,
+      "growth_probability": 0.1,
+      "total_amount_last_quarter": 113400000.0,
+      "deal_count_last_quarter": 3
+    },
+    {
+      "sector": "NanoTech",
+      "stage": "Seed",
+      "growth_rate_amount": 27.129565166530263,
+      "growth_rate_deals": 2.000000000000001,
+      "is_declining": false,
+      "growth_probability": 0.14,
+      "total_amount_last_quarter": 8900000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "Networks",
+      "stage": "Seed",
+      "growth_rate_amount": -108.93371757925068,
+      "growth_rate_deals": 7.999999999999999,
+      "is_declining": false,
+      "growth_probability": 0.94,
+      "total_amount_last_quarter": 156000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "Networks",
+      "stage": "Series ?",
+      "growth_rate_amount": 96.1424428774416,
+      "growth_rate_deals": 0.0,
+      "is_declining": false,
+      "growth_probability": 0.64,
+      "total_amount_last_quarter": 61900000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "Networks",
+      "stage": "Series A",
+      "growth_rate_amount": -4.0159478071765164,
+      "growth_rate_deals": -4.444444444444448,
+      "is_declining": true,
+      "growth_probability": 0.06,
+      "total_amount_last_quarter": 10000000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "Platform",
+      "stage": "Pre-Seed",
+      "growth_rate_amount": 58.77483823505859,
+      "growth_rate_deals": 36.11111111111111,
+      "is_declining": false,
+      "growth_probability": 0.1,
+      "total_amount_last_quarter": 3505000.0,
+      "deal_count_last_quarter": 4
+    },
+    {
+      "sector": "Platform",
+      "stage": "Seed",
+      "growth_rate_amount": 13.053355011264308,
+      "growth_rate_deals": 7.635327635327636,
+      "is_declining": false,
+      "growth_probability": 0.0,
+      "total_amount_last_quarter": 18208461.0,
+      "deal_count_last_quarter": 3
+    },
+    {
+      "sector": "Platform",
+      "stage": "Series ?",
+      "growth_rate_amount": 80.21169267318531,
+      "growth_rate_deals": 17.142857142857142,
+      "is_declining": false,
+      "growth_probability": 0.94,
+      "total_amount_last_quarter": 266600000.0,
+      "deal_count_last_quarter": 2
+    },
+    {
+      "sector": "Platform",
+      "stage": "Series A",
+      "growth_rate_amount": -47.28547415354824,
+      "growth_rate_deals": -25.0,
+      "is_declining": true,
+      "growth_probability": 0.72,
+      "total_amount_last_quarter": 28000000.0,
+      "deal_count_last_quarter": 4
+    },
+    {
+      "sector": "PropertyTech",
+      "stage": "Pre-Seed",
+      "growth_rate_amount": 1.0619524815937624,
+      "growth_rate_deals": -11.666666666666668,
+      "is_declining": false,
+      "growth_probability": 0.0,
+      "total_amount_last_quarter": 2100000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "PropertyTech",
+      "stage": "Seed",
+      "growth_rate_amount": 6.023190854379813,
+      "growth_rate_deals": -3.9468690702087272,
+      "is_declining": false,
+      "growth_probability": 0.06,
+      "total_amount_last_quarter": 1700000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "PropertyTech",
+      "stage": "Series ?",
+      "growth_rate_amount": 15.981558426376017,
+      "growth_rate_deals": -8.333333333333327,
+      "is_declining": false,
+      "growth_probability": 0.78,
+      "total_amount_last_quarter": 40625850.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "PropertyTech",
+      "stage": "Series A",
+      "growth_rate_amount": 6.677197013210801,
+      "growth_rate_deals": -4.821428571428574,
+      "is_declining": false,
+      "growth_probability": 0.14,
+      "total_amount_last_quarter": 60000000.0,
+      "deal_count_last_quarter": 3
+    },
+    {
+      "sector": "PropertyTech",
+      "stage": "Series B",
+      "growth_rate_amount": -36.58572374451262,
+      "growth_rate_deals": -22.22222222222222,
+      "is_declining": true,
+      "growth_probability": 0.28,
+      "total_amount_last_quarter": 26122150.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "Quantum",
+      "stage": "Seed",
+      "growth_rate_amount": 86.67665434248477,
+      "growth_rate_deals": 33.33333333333332,
+      "is_declining": false,
+      "growth_probability": 0.5,
+      "total_amount_last_quarter": 19000000.0,
+      "deal_count_last_quarter": 2
+    },
+    {
+      "sector": "RetailTech",
+      "stage": "Seed",
+      "growth_rate_amount": 34.59809018860878,
+      "growth_rate_deals": 3.57142857142857,
+      "is_declining": false,
+      "growth_probability": 0.06,
+      "total_amount_last_quarter": 2300000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "RetailTech",
+      "stage": "Series ?",
+      "growth_rate_amount": -77.73279486139579,
+      "growth_rate_deals": -39.99999999999999,
+      "is_declining": true,
+      "growth_probability": 0.5,
+      "total_amount_last_quarter": 0.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "Robotics",
+      "stage": "Seed",
+      "growth_rate_amount": 5.687645687645689,
+      "growth_rate_deals": -3.888888888888891,
+      "is_declining": false,
+      "growth_probability": 1.0,
+      "total_amount_last_quarter": 2000000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "Robotics",
+      "stage": "Series ?",
+      "growth_rate_amount": 43.60352929405951,
+      "growth_rate_deals": 0.0,
+      "is_declining": false,
+      "growth_probability": 0.4,
+      "total_amount_last_quarter": 7944289.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "Robotics",
+      "stage": "Series A",
+      "growth_rate_amount": -22.01883591873076,
+      "growth_rate_deals": -29.999999999999993,
+      "is_declining": true,
+      "growth_probability": 0.94,
+      "total_amount_last_quarter": 35000000.0,
+      "deal_count_last_quarter": 2
+    },
+    {
+      "sector": "Robotics",
+      "stage": "Series C",
+      "growth_rate_amount": 26.409373865243907,
+      "growth_rate_deals": 12.857142857142861,
+      "is_declining": false,
+      "growth_probability": 0.3,
+      "total_amount_last_quarter": 95000000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "SaaS",
+      "stage": "Pre-Seed",
+      "growth_rate_amount": 6.396054020443446,
+      "growth_rate_deals": -2.105263157894735,
+      "is_declining": false,
+      "growth_probability": 0.78,
+      "total_amount_last_quarter": 4126820.0,
+      "deal_count_last_quarter": 3
+    },
+    {
+      "sector": "SaaS",
+      "stage": "Seed",
+      "growth_rate_amount": -5.6233248987802975,
+      "growth_rate_deals": -6.867818897894088,
+      "is_declining": true,
+      "growth_probability": 0.96,
+      "total_amount_last_quarter": 2600000.0,
+      "deal_count_last_quarter": 2
+    },
+    {
+      "sector": "SaaS",
+      "stage": "Series ?",
+      "growth_rate_amount": 7.817024756415322,
+      "growth_rate_deals": -0.1948605529168181,
+      "is_declining": false,
+      "growth_probability": 1.0,
+      "total_amount_last_quarter": 110000000.0,
+      "deal_count_last_quarter": 3
+    },
+    {
+      "sector": "SaaS",
+      "stage": "Series A",
+      "growth_rate_amount": 2.2742357675301923,
+      "growth_rate_deals": -1.2473572938689215,
+      "is_declining": false,
+      "growth_probability": 0.02,
+      "total_amount_last_quarter": 40000000.0,
+      "deal_count_last_quarter": 2
+    },
+    {
+      "sector": "SaaS",
+      "stage": "Series B",
+      "growth_rate_amount": 0.3775383085336779,
+      "growth_rate_deals": -1.1721611721611735,
+      "is_declining": false,
+      "growth_probability": 0.3,
+      "total_amount_last_quarter": 33800000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "SaaS",
+      "stage": "Series C",
+      "growth_rate_amount": 12.354427438794184,
+      "growth_rate_deals": 0.8163265306122494,
+      "is_declining": false,
+      "growth_probability": 0.12,
+      "total_amount_last_quarter": 101600000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "SaaS",
+      "stage": "Series D",
+      "growth_rate_amount": -4.1743852421407786,
+      "growth_rate_deals": 5.714285714285711,
+      "is_declining": false,
+      "growth_probability": 0.06,
+      "total_amount_last_quarter": 400984500.0,
+      "deal_count_last_quarter": 3
+    },
+    {
+      "sector": "Social",
+      "stage": "Pre-Seed",
+      "growth_rate_amount": 73.57104911381646,
+      "growth_rate_deals": 7.999999999999999,
+      "is_declining": false,
+      "growth_probability": 0.5,
+      "total_amount_last_quarter": 750000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "SportsTech",
+      "stage": "Seed",
+      "growth_rate_amount": 9.140461215932913,
+      "growth_rate_deals": 7.999999999999999,
+      "is_declining": false,
+      "growth_probability": 0.04,
+      "total_amount_last_quarter": 250000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "TransportationTech",
+      "stage": "Seed",
+      "growth_rate_amount": 2.0537254579807733,
+      "growth_rate_deals": 50.000000000000014,
+      "is_declining": false,
+      "growth_probability": 0.9,
+      "total_amount_last_quarter": 4800000.0,
+      "deal_count_last_quarter": 6
+    },
+    {
+      "sector": "TravelTech",
+      "stage": "Pre-Seed",
+      "growth_rate_amount": -43.05451175947035,
+      "growth_rate_deals": -22.222222222222218,
+      "is_declining": true,
+      "growth_probability": 0.36,
+      "total_amount_last_quarter": 0.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "TravelTech",
+      "stage": "Seed",
+      "growth_rate_amount": 42.616451932606545,
+      "growth_rate_deals": 7.314236392868127e-16,
+      "is_declining": false,
+      "growth_probability": 0.1,
+      "total_amount_last_quarter": 2000000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "TravelTech",
+      "stage": "Series ?",
+      "growth_rate_amount": 7.146115681941229,
+      "growth_rate_deals": -26.66666666666666,
+      "is_declining": false,
+      "growth_probability": 0.4,
+      "total_amount_last_quarter": 1400000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "VideoTech",
+      "stage": "Seed",
+      "growth_rate_amount": 58.039427491223314,
+      "growth_rate_deals": 23.999999999999993,
+      "is_declining": false,
+      "growth_probability": 0.04,
+      "total_amount_last_quarter": 1272000.0,
+      "deal_count_last_quarter": 2
+    },
+    {
+      "sector": "Wearables",
+      "stage": "Series ?",
+      "growth_rate_amount": -102.8312237781265,
+      "growth_rate_deals": 0.0,
+      "is_declining": false,
+      "growth_probability": 0.6,
+      "total_amount_last_quarter": 3807450.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "Wearables",
+      "stage": "Series A",
+      "growth_rate_amount": -20.000000000000004,
+      "growth_rate_deals": 0.0,
+      "is_declining": false,
+      "growth_probability": 0.36,
+      "total_amount_last_quarter": 0.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "eCommerce",
+      "stage": "Pre-Seed",
+      "growth_rate_amount": -45.99151118158536,
+      "growth_rate_deals": -27.692307692307693,
+      "is_declining": true,
+      "growth_probability": 0.74,
+      "total_amount_last_quarter": 70000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "eCommerce",
+      "stage": "Seed",
+      "growth_rate_amount": 22.94953879383544,
+      "growth_rate_deals": 8.391608391608388,
+      "is_declining": false,
+      "growth_probability": 0.34,
+      "total_amount_last_quarter": 2700000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "eCommerce",
+      "stage": "Series ?",
+      "growth_rate_amount": -6.299034739718294,
+      "growth_rate_deals": 0.8658008658008658,
+      "is_declining": false,
+      "growth_probability": 0.98,
+      "total_amount_last_quarter": 10000000.0,
+      "deal_count_last_quarter": 2
+    },
+    {
+      "sector": "eCommerce",
+      "stage": "Series A",
+      "growth_rate_amount": 22.034937788776517,
+      "growth_rate_deals": 13.095238095238104,
+      "is_declining": false,
+      "growth_probability": 0.28,
+      "total_amount_last_quarter": 78000000.0,
+      "deal_count_last_quarter": 5
+    },
+    {
+      "sector": "iOT",
+      "stage": "Seed",
+      "growth_rate_amount": 24.784106744699244,
+      "growth_rate_deals": 6.060606060606062,
+      "is_declining": false,
+      "growth_probability": 0.9,
+      "total_amount_last_quarter": 13500000.0,
+      "deal_count_last_quarter": 1
+    },
+    {
+      "sector": "iOT",
+      "stage": "Series ?",
+      "growth_rate_amount": 57.36299761765885,
+      "growth_rate_deals": 2.194270917860438e-15,
+      "is_declining": false,
+      "growth_probability": 0.68,
+      "total_amount_last_quarter": 28000000.0,
+      "deal_count_last_quarter": 2
+    }
+  ]
+}

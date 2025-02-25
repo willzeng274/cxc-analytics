@@ -1,0 +1,80 @@
+{
+  "error": {
+    "model_insights": {
+      "model_metrics": {
+        "random_forest": {
+          "mean_absolute_error": 5712939.913119928,
+          "mean_squared_error": 474242279468240.8,
+          "root_mean_squared_error": 21777104.4785169,
+          "r2_score": 0.9037807201291864,
+          "mape": "Infinity",
+          "explained_variance": 0.9039239510567962,
+          "cv_scores_mean": -0.017580553321749282,
+          "cv_scores_std": 0.7486462465572081
+        }
+      },
+      "best_model": "random_forest",
+      "feature_importance": {
+        "roundType_numeric": 0.33995027574911635,
+        "previous_rounds": 0.2681968529623038,
+        "company_age": 0.13111665843571377,
+        "day_of_week": 0.06437756492648976,
+        "month": 0.0453957580927827,
+        "primaryTag_company_Platform": 0.027568629236011822,
+        "primaryTag_company_SaaS": 0.022458503466790618,
+        "primaryTag_company_AutoTech": 0.011562825962528125,
+        "ecosystemName_Toronto": 0.011507450188480591,
+        "primaryTag_company_AI": 0.00938958185396252
+      }
+    },
+    "predictions": [
+      {
+        "company": "Masthead Data ",
+        "current_round": "Pre-Seed",
+        "next_round": "Seed",
+        "predicted_funding": 1701696.98,
+        "ecosystem": "Toronto",
+        "primary_tag": "Analytics"
+      },
+      {
+        "company": "Bench IQ",
+        "current_round": "Pre-Seed",
+        "next_round": "Seed",
+        "predicted_funding": 2147260.0,
+        "ecosystem": "Toronto",
+        "primary_tag": "LegalTech"
+      },
+      {
+        "company": "Avicanna",
+        "current_round": "Series ?",
+        "next_round": "Unknown",
+        "predicted_funding": 45315268.75,
+        "ecosystem": "Toronto",
+        "primary_tag": "BioTech"
+      },
+      {
+        "company": "Tailscale",
+        "current_round": "Seed",
+        "next_round": "Series A",
+        "predicted_funding": 16239093.39,
+        "ecosystem": "Toronto",
+        "primary_tag": "CyberSecurity"
+      },
+      {
+        "company": "Lexop",
+        "current_round": "Seed",
+        "next_round": "Series A",
+        "predicted_funding": 15405788.54,
+        "ecosystem": "Quebec",
+        "primary_tag": "FinTech"
+      }
+    ],
+    "dataset_stats": {
+      "total_companies": 1902,
+      "total_deals": 2749,
+      "total_investors": 2263,
+      "ecosystems": 9
+    }
+  },
+  "traceback": "Traceback (most recent call last):\n File \"<string>\", line 401, in <module>\nZeroDivisionError: division by zero\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n File \"<string>\", line 403, in <module>\nException: {\"model_insights\": {\"model_metrics\": {\"random_forest\": {\"mean_absolute_error\": 5712939.913119928, \"mean_squared_error\": 474242279468240.8, \"root_mean_squared_error\": 21777104.4785169, \"r2_score\": 0.9037807201291864, \"mape\": Infinity, \"explained_variance\": 0.9039239510567962, \"cv_scores_mean\": -0.017580553321749282, \"cv_scores_std\": 0.7486462465572081}}, \"best_model\": \"random_forest\", \"feature_importance\": {\"roundType_numeric\": 0.33995027574911635, \"previous_rounds\": 0.2681968529623038, \"company_age\": 0.13111665843571377, \"day_of_week\": 0.06437756492648976, \"month\": 0.0453957580927827, \"primaryTag_company_Platform\": 0.027568629236011822, \"primaryTag_company_SaaS\": 0.022458503466790618, \"primaryTag_company_AutoTech\": 0.011562825962528125, \"ecosystemName_Toronto\": 0.011507450188480591, \"primaryTag_company_AI\": 0.00938958185396252}}, \"predictions\": [{\"company\": \"Masthead Data \", \"current_round\": \"Pre-Seed\", \"next_round\": \"Seed\", \"predicted_funding\": 1701696.98, \"ecosystem\": \"Toronto\", \"primary_tag\": \"Analytics\"}, {\"company\": \"Bench IQ\", \"current_round\": \"Pre-Seed\", \"next_round\": \"Seed\", \"predicted_funding\": 2147260.0, \"ecosystem\": \"Toronto\", \"primary_tag\": \"LegalTech\"}, {\"company\": \"Avicanna\", \"current_round\": \"Series ?\", \"next_round\": \"Unknown\", \"predicted_funding\": 45315268.75, \"ecosystem\": \"Toronto\", \"primary_tag\": \"BioTech\"}, {\"company\": \"Tailscale\", \"current_round\": \"Seed\", \"next_round\": \"Series A\", \"predicted_funding\": 16239093.39, \"ecosystem\": \"Toronto\", \"primary_tag\": \"CyberSecurity\"}, {\"company\": \"Lexop\", \"current_round\": \"Seed\", \"next_round\": \"Series A\", \"predicted_funding\": 15405788.54, \"ecosystem\": \"Quebec\", \"primary_tag\": \"FinTech\"}], \"dataset_stats\": {\"total_companies\": 1902, \"total_deals\": 2749, \"total_investors\": 2263, \"ecosystems\": 9}}\n"
+}
