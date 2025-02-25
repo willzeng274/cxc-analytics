@@ -1,0 +1,90 @@
+{
+  "dataset_stats": {
+    "total_companies": 1902,
+    "total_deals": 2749,
+    "total_investors": 2263,
+    "ecosystems": 9
+  },
+  "ecosystem_growth_2025": [
+    {
+      "ecosystem": "Alberta",
+      "predicted_amount_2025": 583510443.75,
+      "predicted_deals_2025": 29.78,
+      "amount_growth_rate": 98.99306324643443,
+      "deals_growth_rate": 41.80952380952381,
+      "growth_probability": 0.06,
+      "actual_amount_2024": 293231550.0,
+      "actual_deals_2024": 21
+    },
+    {
+      "ecosystem": "British Columbia",
+      "predicted_amount_2025": 3241619469.67,
+      "predicted_deals_2025": 47.83,
+      "amount_growth_rate": -21.81521267397177,
+      "deals_growth_rate": 3.9782608695652137,
+      "growth_probability": 0.05,
+      "actual_amount_2024": 4146100003.0,
+      "actual_deals_2024": 46
+    },
+    {
+      "ecosystem": "East Coast",
+      "predicted_amount_2025": 364370116.16,
+      "predicted_deals_2025": 26.39,
+      "amount_growth_rate": 29.720119118753637,
+      "deals_growth_rate": -5.749999999999998,
+      "growth_probability": 0.1,
+      "actual_amount_2024": 280889440.0,
+      "actual_deals_2024": 28
+    },
+    {
+      "ecosystem": "Other",
+      "predicted_amount_2025": 437939560.79,
+      "predicted_deals_2025": 17.19,
+      "amount_growth_rate": 16.315704412691957,
+      "deals_growth_rate": 32.23076923076924,
+      "growth_probability": 0.74,
+      "actual_amount_2024": 376509400.0,
+      "actual_deals_2024": 13
+    },
+    {
+      "ecosystem": "Ottawa",
+      "predicted_amount_2025": 273621945.16,
+      "predicted_deals_2025": 16.27,
+      "amount_growth_rate": 1268.1097258000002,
+      "deals_growth_rate": 442.3333333333333,
+      "growth_probability": 0.21,
+      "actual_amount_2024": 20000000.0,
+      "actual_deals_2024": 3
+    },
+    {
+      "ecosystem": "Quebec",
+      "predicted_amount_2025": 2418280785.4,
+      "predicted_deals_2025": 71.96,
+      "amount_growth_rate": 20.590094842292594,
+      "deals_growth_rate": -14.33333333333334,
+      "growth_probability": 0.02,
+      "actual_amount_2024": 2005372654.0,
+      "actual_deals_2024": 84
+    },
+    {
+      "ecosystem": "Toronto",
+      "predicted_amount_2025": 5634287011.82,
+      "predicted_deals_2025": 108.1,
+      "amount_growth_rate": -27.27104048192144,
+      "deals_growth_rate": -20.514705882352946,
+      "growth_probability": 0.05,
+      "actual_amount_2024": 7746964963.0,
+      "actual_deals_2024": 136
+    },
+    {
+      "ecosystem": "Waterloo Region",
+      "predicted_amount_2025": 186507114.4,
+      "predicted_deals_2025": 17.39,
+      "amount_growth_rate": 183.45528446882355,
+      "deals_growth_rate": 8.687500000000004,
+      "growth_probability": 0.75,
+      "actual_amount_2024": 65797720.0,
+      "actual_deals_2024": 16
+    }
+  ]
+}

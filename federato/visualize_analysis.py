@@ -181,6 +181,8 @@ def create_temporal_analysis_plots(results):
         columns=['count']
     )
     daily_counts.index = pd.to_datetime(daily_counts.index)
+    # Remove all dates before 2025-01-01
+    daily_counts = daily_counts[daily_counts.index >= '2025-01-01']
     
     # Function to format numbers (e.g., 150000 -> "150k")
     def format_number(num):
@@ -289,6 +291,7 @@ def create_user_session_analysis_plots(results):
             'value': [eps['min'], eps['25%'], eps['50%'], eps['75%'], eps['max']],
             'metric': ['min', '25%', 'median', '75%', 'max']
         })
+        eps_df = eps_df[eps_df['value'] != eps_df['value'].max()]
         fig = px.box(eps_df, y='value', title="Events per Session Distribution")
         st.plotly_chart(fig, use_container_width=True)
         
@@ -298,6 +301,7 @@ def create_user_session_analysis_plots(results):
             'value': [epu['min'], epu['25%'], epu['50%'], epu['75%'], epu['max']],
             'metric': ['min', '25%', 'median', '75%', 'max']
         })
+        epu_df = epu_df[epu_df['value'] != epu_df['value'].max()]
         fig = px.box(epu_df, y='value', title="Events per User Distribution")
         st.plotly_chart(fig, use_container_width=True)
     
@@ -308,6 +312,7 @@ def create_user_session_analysis_plots(results):
             'value': [sd['min'], sd['25%'], sd['50%'], sd['75%'], sd['max']],
             'metric': ['min', '25%', 'median', '75%', 'max']
         })
+        sd_df = sd_df[sd_df['value'] != sd_df['value'].max()]
         fig = px.box(sd_df, y='value', title="Session Duration Distribution (seconds)")
         st.plotly_chart(fig, use_container_width=True)
         
@@ -317,6 +322,7 @@ def create_user_session_analysis_plots(results):
             'value': [spu['min'], spu['25%'], spu['50%'], spu['75%'], spu['max']],
             'metric': ['min', '25%', 'median', '75%', 'max']
         })
+        spu_df = spu_df[spu_df['value'] != spu_df['value'].max()]
         fig = px.box(spu_df, y='value', title="Sessions per User Distribution")
         st.plotly_chart(fig, use_container_width=True)
 
@@ -792,68 +798,66 @@ def create_temporal_heatmap(results):
     st.write("Time-based analysis of user activity patterns.")
     
     st.subheader("Hourly Activity Patterns")
-    col1, col2 = st.columns(2)
     
-    with col1:
-        hourly_dist = results['temporal_relationships']['hourly_patterns']['distribution']
-        
-        all_hours = pd.DataFrame({'Hour': range(24)})
-        data_df = pd.DataFrame({
-            'Hour': [int(hour) for hour in hourly_dist.keys()],
-            'Events': list(hourly_dist.values())
-        })
-        
-        hourly_df = pd.merge(all_hours, data_df, on='Hour', how='left').fillna(0)
-        hourly_df = hourly_df.sort_values('Hour')
-        
-        def format_number(num):
-            if num >= 1_000_000:
-                return f"{num/1_000_000:.0f}M"
-            elif num >= 1_000:
-                return f"{num/1_000:.0f}k"
-            else:
-                return str(int(num))
-        
-        fig = go.Figure()
-        fig.add_trace(
-            go.Scatter(
-                x=hourly_df['Hour'],
-                y=hourly_df['Events'],
-                mode='lines+markers+text',
-                line=dict(color='#1f77b4', width=2),
-                marker=dict(size=8),
-                text=hourly_df['Events'].apply(format_number),
-                textposition='top center',
-                textfont=dict(color='#1f77b4', size=10)
-            )
-        )
-        
-        fig.update_layout(
-            title="Activity by Hour of Day",
-            xaxis_title="Hour",
-            yaxis_title="Number of Events",
-            xaxis=dict(
-                tickmode='array',
-                ticktext=[str(i).zfill(2) for i in range(24)],
-                tickvals=list(range(24)),
-                range=[-0.5, 23.5],
-                tickangle=45
-            ),
-            showlegend=False
-        )
-        st.plotly_chart(fig, use_container_width=True)
+    hourly_dist = results['temporal_relationships']['hourly_patterns']['distribution']
     
-    with col2:
-        st.write("**Peak Activity Hours**")
-        peak_hours = results['temporal_relationships']['hourly_patterns']['peak_hours']
-        peak_df = pd.DataFrame({
-            'Hour': list(peak_hours.keys()),
-            'Events': list(peak_hours.values())
-        })
-        fig = px.bar(peak_df, x='Hour', y='Events',
-                    title="Top 5 Busiest Hours",
-                    color_discrete_sequence=['#2ecc71'])
-        st.plotly_chart(fig, use_container_width=True)
+    all_hours = pd.DataFrame({'Hour': range(24)})
+    data_df = pd.DataFrame({
+        'Hour': [int(hour) for hour in hourly_dist.keys()],
+        'Events': list(hourly_dist.values())
+    })
+    
+    hourly_df = pd.merge(all_hours, data_df, on='Hour', how='left').fillna(0)
+    hourly_df = hourly_df.sort_values('Hour')
+    
+    def format_number(num):
+        if num >= 1_000_000:
+            return f"{num/1_000_000:.0f}M"
+        elif num >= 1_000:
+            return f"{num/1_000:.0f}k"
+        else:
+            return str(int(num))
+    
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=hourly_df['Hour'],
+            y=hourly_df['Events'],
+            mode='lines+markers+text',
+            line=dict(color='#1f77b4', width=2),
+            marker=dict(size=8),
+            text=hourly_df['Events'].apply(format_number),
+            textposition='top center',
+            textfont=dict(color='#1f77b4', size=10)
+        )
+    )
+    
+    fig.update_layout(
+        title="Activity by Hour of Day",
+        xaxis_title="Hour",
+        yaxis_title="Number of Events",
+        xaxis=dict(
+            tickmode='array',
+            ticktext=[str(i).zfill(2) for i in range(24)],
+            tickvals=list(range(24)),
+            range=[-0.5, 23.5],
+            tickangle=45
+        ),
+        showlegend=False
+    )
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # with col2:
+    #     st.write("**Peak Activity Hours**")
+    #     peak_hours = results['temporal_relationships']['hourly_patterns']['peak_hours']
+    #     peak_df = pd.DataFrame({
+    #         'Hour': list(peak_hours.keys()),
+    #         'Events': list(peak_hours.values())
+    #     })
+    #     fig = px.bar(peak_df, x='Hour', y='Events',
+    #                 title="Top 5 Busiest Hours",
+    #                 color_discrete_sequence=['#2ecc71'])
+    #     st.plotly_chart(fig, use_container_width=True)
     
     st.subheader("Weekly Activity Patterns")
     
@@ -987,51 +991,51 @@ def create_temporal_heatmap(results):
     st.write("Peak Hours by Weekday")
     st.dataframe(weekday_summary_df, use_container_width=True)
 
-def create_user_segments_analysis(results):
-    st.header("User Segments")
-    st.write("Behavioral segmentation analysis of users.")
+# def create_user_segments_analysis(results):
+#     st.header("User Segments")
+#     st.write("Behavioral segmentation analysis of users.")
     
-    segments = results['journey_analysis']['user_segments']
-    if not segments:
-        st.warning("No user segments data available.")
-        return
+#     segments = results['journey_analysis']['user_segments']
+#     if not segments:
+#         st.warning("No user segments data available.")
+#         return
     
-    fig = go.Figure()
+#     fig = go.Figure()
     
-    for segment_id, data in segments.items():
-        if not data.get('top_events'):
-            continue
+#     for segment_id, data in segments.items():
+#         if not data.get('top_events'):
+#             continue
             
-        top_events = list(data['top_events'].items())
-        if not top_events:
-            continue
+#         top_events = list(data['top_events'].items())
+#         if not top_events:
+#             continue
             
-        while len(top_events) < 5:
-            top_events.append((f"Event_{len(top_events)+1}", 0))
+#         while len(top_events) < 5:
+#             top_events.append((f"Event_{len(top_events)+1}", 0))
             
-        fig.add_trace(go.Scatterpolar(
-            r=[v for _, v in top_events[:5]],
-            theta=[k[:20] + '...' if len(k) > 20 else k for k, _ in top_events[:5]],
-            name=f"{segment_id} ({data.get('percentage', 0):.1f}%)",
-            line=dict(color=CUSTOM_COLORS[int(segment_id.split('_')[1]) % len(CUSTOM_COLORS)])
-        ))
+#         fig.add_trace(go.Scatterpolar(
+#             r=[v for _, v in top_events[:5]],
+#             theta=[k[:20] + '...' if len(k) > 20 else k for k, _ in top_events[:5]],
+#             name=f"{segment_id} ({data.get('percentage', 0):.1f}%)",
+#             line=dict(color=CUSTOM_COLORS[int(segment_id.split('_')[1]) % len(CUSTOM_COLORS)])
+#         ))
     
-    if not fig.data:
-        st.warning("No segment data available for visualization.")
-        return
+#     if not fig.data:
+#         st.warning("No segment data available for visualization.")
+#         return
         
-    fig.update_layout(
-        polar=dict(
-            radialaxis=dict(
-                visible=True,
-                range=[0, max([v for s in segments.values() if 'top_events' in s 
-                             for v in s['top_events'].values()], default=1)]
-            )
-        ),
-        showlegend=True,
-        title="User Segment Characteristics"
-    )
-    st.plotly_chart(fig, use_container_width=True)
+#     fig.update_layout(
+#         polar=dict(
+#             radialaxis=dict(
+#                 visible=True,
+#                 range=[0, max([v for s in segments.values() if 'top_events' in s 
+#                              for v in s['top_events'].values()], default=1)]
+#             )
+#         ),
+#         showlegend=True,
+#         title="User Segment Characteristics"
+#     )
+#     st.plotly_chart(fig, use_container_width=True)
 
 def create_geographic_insights(results):
     st.header("Geographic Insights")
@@ -1074,7 +1078,7 @@ def main():
                 "User Sessions",
                 "User Journeys",
                 "Event Sequences",
-                "User Segments"
+                # "User Segments"
             ],
             "Technical Environment": [
                 "Device Distribution",
@@ -1088,7 +1092,8 @@ def main():
             "Temporal Analysis": [
                 "Time Patterns",
                 "Activity Distribution"
-            ]
+            ],
+            "Platform Snapshots": None
         }
         
         main_section = st.sidebar.radio("Main Sections", list(sections.keys()))
@@ -1107,7 +1112,7 @@ def main():
         st.sidebar.metric("Active Sessions", f"{results['basic_stats']['unique_sessions']:,}")
         
         if main_section == "Overview":
-            st.write(f"### Date Range: {results['basic_stats']['date_range']['start']} to {results['basic_stats']['date_range']['end']}")
+            # st.write(f"### Date Range: {results['basic_stats']['date_range']['start']} to {results['basic_stats']['date_range']['end']}")
             create_device_analysis_plots(results)
             create_geographic_analysis_plots(results)
             create_temporal_analysis_plots(results)
@@ -1126,14 +1131,14 @@ def main():
             elif selected_subsection == "Event Sequences":
                 create_event_sequence_plot(results)
                 create_user_flow_sankey(results)
-            elif selected_subsection == "User Segments":
-                try:
-                    if 'journey_analysis' in results and 'user_segments' in results['journey_analysis']:
-                        create_user_segments_analysis(results)
-                    else:
-                        st.warning("User segments data not available.")
-                except Exception as e:
-                    st.warning(f"Could not create user segments visualization: {str(e)}")
+            # elif selected_subsection == "User Segments":
+            #     try:
+            #         if 'journey_analysis' in results and 'user_segments' in results['journey_analysis']:
+            #             create_user_segments_analysis(results)
+            #         else:
+            #             st.warning("User segments data not available.")
+            #     except Exception as e:
+            #         st.warning(f"Could not create user segments visualization: {str(e)}")
             
         elif main_section == "Technical Environment":
             if selected_subsection == "Device Distribution":
@@ -1209,7 +1214,12 @@ def main():
                 create_temporal_heatmap(results)
             elif selected_subsection == "Activity Distribution":
                 create_temporal_relationship_plots(results)
-    
+        
+        elif main_section == "Platform Snapshots":
+            st.image("federato/images/accounts.png")
+            st.image("federato/images/action-center.png")
+            st.image("federato/images/dashboard.png")
+            
     except Exception as e:
         st.error(f"Error loading or processing data: {str(e)}")
         st.write("Please make sure the analysis_results.json file is present in the same directory.")

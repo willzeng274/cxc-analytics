@@ -1,0 +1,94 @@
+{
+  "dataset_stats": {
+    "total_companies": 1902,
+    "total_deals": 2749,
+    "total_investors": 2263,
+    "ecosystems": 9
+  },
+  "monthly_trends_2025": [
+    {
+      "month": 1,
+      "year": 2025,
+      "predicted_amount": 439523675.5203476,
+      "predicted_deal_count": 7.078372453753379,
+      "growth_probability": 0.06768610480836514
+    },
+    {
+      "month": 2,
+      "year": 2025,
+      "predicted_amount": 439523675.5203476,
+      "predicted_deal_count": 6.332238778566473,
+      "growth_probability": 0.06768610480836514
+    },
+    {
+      "month": 3,
+      "year": 2025,
+      "predicted_amount": 439523675.5203476,
+      "predicted_deal_count": 20.345428575681215,
+      "growth_probability": 0.06768610480836514
+    },
+    {
+      "month": 4,
+      "year": 2025,
+      "predicted_amount": 1268978107.0519238,
+      "predicted_deal_count": 23.168286516298767,
+      "growth_probability": 0.06768610480836514
+    },
+    {
+      "month": 5,
+      "year": 2025,
+      "predicted_amount": 1292478274.2637753,
+      "predicted_deal_count": 24.88546603677851,
+      "growth_probability": 0.05029067214993073
+    },
+    {
+      "month": 6,
+      "year": 2025,
+      "predicted_amount": 2016768837.9235451,
+      "predicted_deal_count": 24.88546603677851,
+      "growth_probability": 0.0585509382379784
+    },
+    {
+      "month": 7,
+      "year": 2025,
+      "predicted_amount": 1729088754.6566947,
+      "predicted_deal_count": 22.864311116795154,
+      "growth_probability": 0.027837713572059563
+    },
+    {
+      "month": 8,
+      "year": 2025,
+      "predicted_amount": 1689388593.6034782,
+      "predicted_deal_count": 18.638920517661777,
+      "growth_probability": 0.03201659208611687
+    },
+    {
+      "month": 9,
+      "year": 2025,
+      "predicted_amount": 1689388593.6034782,
+      "predicted_deal_count": 14.646954933938446,
+      "growth_probability": 0.09855376732280084
+    },
+    {
+      "month": 10,
+      "year": 2025,
+      "predicted_amount": 2387507341.147612,
+      "predicted_deal_count": 32.91421913340591,
+      "growth_probability": 0.09855376732280084
+    },
+    {
+      "month": 11,
+      "year": 2025,
+      "predicted_amount": 1405020486.7961783,
+      "predicted_deal_count": 13.285455947584925,
+      "growth_probability": 0.05408583885838225
+    },
+    {
+      "month": 12,
+      "year": 2025,
+      "predicted_amount": 1817425752.725145,
+      "predicted_deal_count": 13.518408887561792,
+      "growth_probability": 0.17440885073952855
+    }
+  ]
+}

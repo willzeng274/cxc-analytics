@@ -38,6 +38,572 @@ def create_dual_axis_figure(x, y1, y2, name1, name2, title, y1_title, y2_title):
     return fig
 
 @st.cache_data
+def display_predictive_analytics():
+    """Display predictive analytics visualizations based on analysis data."""
+    st.header("🔮 Predictive Analytics")
+    st.markdown(
+        """
+        <div class='insight-box'>
+        Predictive analytics based on historical data, showing projected growth rates, monthly trends, and ecosystem forecasts.
+        These visualizations help identify future investment opportunities and market directions.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    try:
+        with open("runQL/Analysis.json", "r") as f:
+            analysis_data = json.load(f)
+        
+        st.subheader("Sector Growth Analysis")
+        
+        sector_growth = pd.DataFrame(analysis_data.get("sector_growth_analysis", []))
+        
+        if not sector_growth.empty:
+            sector_growth['growth_probability_pct'] = sector_growth['growth_probability'] * 100
+            sector_growth['formatted_amount'] = sector_growth['total_amount_last_quarter'] / 1e6
+            
+            st.markdown("### 🚀 Top Sectors by Growth Rate")
+            
+            positive_growth = sector_growth[sector_growth['growth_rate_amount'] > 0]
+            top_growth_sectors = positive_growth.sort_values('growth_rate_amount', ascending=False).head(10)
+            
+            fig_growth = go.Figure()
+            
+            fig_growth.add_trace(go.Bar(
+                x=top_growth_sectors['sector'],
+                y=top_growth_sectors['growth_rate_amount'],
+                name='Amount Growth Rate (%)',
+                marker_color='rgba(52, 152, 219, 0.8)',
+                text=[f"{x:.1f}%" for x in top_growth_sectors['growth_rate_amount']],
+                textposition='auto',
+                hovertemplate='<b>%{x}</b><br>Growth Rate: %{y:.1f}%<br>Stage: %{customdata}',
+                customdata=top_growth_sectors['stage']
+            ))
+            
+            fig_growth.add_trace(go.Scatter(
+                x=top_growth_sectors['sector'],
+                y=top_growth_sectors['growth_probability_pct'],
+                name='Growth Probability (%)',
+                yaxis='y2',
+                mode='markers',
+                marker=dict(
+                    size=12,
+                    color='rgba(231, 76, 60, 0.8)',
+                    symbol='circle'
+                ),
+                hovertemplate='<b>%{x}</b><br>Probability: %{y:.1f}%<br>Stage: %{customdata}',
+                customdata=top_growth_sectors['stage']
+            ))
+            
+            fig_growth.update_layout(
+                title=dict(
+                    text='TOP SECTORS BY GROWTH RATE',
+                    font=dict(size=16),
+                    x=0.5,
+                    xanchor='center'
+                ),
+                xaxis=dict(
+                    title='Sector',
+                    tickangle=-45,
+                    tickfont=dict(size=12)
+                ),
+                yaxis=dict(
+                    title='Growth Rate (%)',
+                    gridcolor='rgba(128, 128, 128, 0.2)'
+                ),
+                yaxis2=dict(
+                    title='Growth Probability (%)',
+                    overlaying='y',
+                    side='right',
+                    range=[0, 100],
+                    ticksuffix='%'
+                ),
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                ),
+                height=600,
+                template='plotly_white',
+                hovermode='x unified'
+            )
+            
+            st.plotly_chart(fig_growth, use_container_width=True)
+            create_download_buttons(fig_growth, "top_sectors_growth_rate")
+            
+            st.markdown("### 🎯 Sectors by Growth Probability")
+            
+            high_probability = sector_growth[sector_growth['growth_probability'] >= 0.7]
+            top_probability = high_probability.sort_values('growth_probability', ascending=False).head(10)
+            
+            fig_probability = go.Figure()
+            
+            fig_probability.add_trace(go.Bar(
+                x=top_probability['sector'],
+                y=top_probability['growth_probability_pct'],
+                name='Growth Probability (%)',
+                marker_color='rgba(46, 204, 113, 0.8)',
+                text=[f"{x:.1f}%" for x in top_probability['growth_probability_pct']],
+                textposition='auto',
+                hovertemplate='<b>%{x}</b><br>Probability: %{y:.1f}%<br>Stage: %{customdata}',
+                customdata=top_probability['stage']
+            ))
+            
+            fig_probability.add_trace(go.Scatter(
+                x=top_probability['sector'],
+                y=top_probability['growth_rate_amount'],
+                name='Amount Growth Rate (%)',
+                yaxis='y2',
+                mode='markers',
+                marker=dict(
+                    size=12,
+                    color='rgba(155, 89, 182, 0.8)',
+                    symbol='diamond'
+                ),
+                hovertemplate='<b>%{x}</b><br>Growth Rate: %{y:.1f}%<br>Stage: %{customdata}',
+                customdata=top_probability['stage']
+            ))
+            
+            fig_probability.update_layout(
+                title=dict(
+                    text='SECTORS WITH HIGHEST GROWTH PROBABILITY',
+                    font=dict(size=16),
+                    x=0.5,
+                    xanchor='center'
+                ),
+                xaxis=dict(
+                    title='Sector',
+                    tickangle=-45,
+                    tickfont=dict(size=12)
+                ),
+                yaxis=dict(
+                    title='Growth Probability (%)',
+                    gridcolor='rgba(128, 128, 128, 0.2)',
+                    range=[0, 100],
+                    ticksuffix='%'
+                ),
+                yaxis2=dict(
+                    title='Growth Rate (%)',
+                    overlaying='y',
+                    side='right'
+                ),
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                ),
+                height=600,
+                template='plotly_white',
+                hovermode='x unified'
+            )
+            
+            st.plotly_chart(fig_probability, use_container_width=True)
+            create_download_buttons(fig_probability, "sectors_highest_probability")
+            
+            st.markdown("### 📊 Funding Stage Analysis")
+            
+            stage_analysis = sector_growth.groupby('stage').agg({
+                'growth_rate_amount': 'mean',
+                'growth_rate_deals': 'mean',
+                'growth_probability': 'mean',
+                'total_amount_last_quarter': 'sum',
+                'deal_count_last_quarter': 'sum'
+            }).reset_index()
+            
+            stage_analysis = stage_analysis.sort_values('growth_rate_amount', ascending=False)
+            
+            fig_stage = go.Figure()
+            
+            fig_stage.add_trace(go.Bar(
+                x=stage_analysis['stage'],
+                y=stage_analysis['growth_rate_amount'],
+                name='Avg Growth Rate (%)',
+                marker_color='rgba(241, 196, 15, 0.8)',
+                text=[f"{x:.1f}%" for x in stage_analysis['growth_rate_amount']],
+                textposition='auto'
+            ))
+            
+            fig_stage.add_trace(go.Scatter(
+                x=stage_analysis['stage'],
+                y=stage_analysis['growth_probability'] * 100,
+                name='Avg Growth Probability (%)',
+                yaxis='y2',
+                mode='markers',
+                marker=dict(
+                    size=12,
+                    color='rgba(230, 126, 34, 0.8)',
+                    symbol='circle'
+                )
+            ))
+            
+            fig_stage.update_layout(
+                title=dict(
+                    text='FUNDING STAGE GROWTH ANALYSIS',
+                    font=dict(size=16),
+                    x=0.5,
+                    xanchor='center'
+                ),
+                xaxis=dict(
+                    title='Funding Stage',
+                    tickangle=-45,
+                    tickfont=dict(size=12)
+                ),
+                yaxis=dict(
+                    title='Avg Growth Rate (%)',
+                    gridcolor='rgba(128, 128, 128, 0.2)'
+                ),
+                yaxis2=dict(
+                    title='Avg Growth Probability (%)',
+                    overlaying='y',
+                    side='right',
+                    range=[0, 100],
+                    ticksuffix='%'
+                ),
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                ),
+                height=600,
+                template='plotly_white',
+                hovermode='x unified'
+            )
+            
+            st.plotly_chart(fig_stage, use_container_width=True)
+            create_download_buttons(fig_stage, "funding_stage_analysis")
+            
+            st.markdown("### 💰 Investment Volume vs Growth Rate")
+            
+            significant_investment = sector_growth[sector_growth['total_amount_last_quarter'] > 10000000]
+            
+            fig_investment = px.scatter(
+                significant_investment,
+                x='total_amount_last_quarter',
+                y='growth_rate_amount',
+                size='deal_count_last_quarter',
+                color='growth_probability_pct',
+                hover_name='sector',
+                text='sector',
+                color_continuous_scale='Viridis',
+                size_max=30,
+                opacity=0.8,
+                log_x=True,
+                labels={
+                    'total_amount_last_quarter': 'Investment Volume (Last Quarter)',
+                    'growth_rate_amount': 'Growth Rate (%)',
+                    'growth_probability_pct': 'Growth Probability (%)',
+                    'deal_count_last_quarter': 'Deal Count'
+                }
+            )
+            
+            fig_investment.update_traces(
+                textposition='top center',
+                textfont=dict(size=10),
+                hovertemplate='<b>%{hovertext}</b><br>Stage: %{customdata}<br>Investment: $%{x:,.0f}<br>Growth Rate: %{y:.1f}%<br>Probability: %{marker.color:.1f}%<br>Deals: %{marker.size}',
+                customdata=significant_investment['stage']
+            )
+            
+            fig_investment.update_layout(
+                title=dict(
+                    text='INVESTMENT VOLUME VS GROWTH RATE',
+                    font=dict(size=16),
+                    x=0.5,
+                    xanchor='center'
+                ),
+                height=700,
+                template='plotly_white',
+                coloraxis_colorbar=dict(
+                    title='Growth<br>Probability (%)'
+                )
+            )
+            
+            st.plotly_chart(fig_investment, use_container_width=True)
+            create_download_buttons(fig_investment, "investment_vs_growth")
+            
+            st.markdown("### 📋 Detailed Sector Growth Metrics")
+            
+            detail_df = sector_growth.sort_values(['growth_probability', 'growth_rate_amount'], ascending=False)
+            
+            detail_df['growth_rate_amount'] = detail_df['growth_rate_amount'].round(1).astype(str) + '%'
+            detail_df['growth_rate_deals'] = detail_df['growth_rate_deals'].round(1).astype(str) + '%'
+            detail_df['growth_probability'] = (detail_df['growth_probability'] * 100).round(0).astype(str) + '%'
+            detail_df['total_amount_last_quarter'] = detail_df['total_amount_last_quarter'] / 1e6
+            
+            st.dataframe(
+                detail_df,
+                hide_index=True,
+                column_config={
+                    "sector": st.column_config.TextColumn("Sector", width="medium"),
+                    "stage": st.column_config.TextColumn("Funding Stage", width="medium"),
+                    "growth_rate_amount": st.column_config.TextColumn("Amount Growth", width="small"),
+                    "growth_rate_deals": st.column_config.TextColumn("Deal Growth", width="small"),
+                    "growth_probability": st.column_config.TextColumn("Growth Probability", width="small"),
+                    "total_amount_last_quarter": st.column_config.NumberColumn("Last Quarter ($M)", format="$%.1fM"),
+                    "deal_count_last_quarter": st.column_config.NumberColumn("Deals Last Quarter", format="%d"),
+                    "is_declining": st.column_config.CheckboxColumn("Is Declining")
+                }
+            )
+            
+            st.markdown("### 🔥 Sector-Stage Growth Heatmap")
+            
+            heatmap_data = sector_growth.pivot_table(
+                values='growth_rate_amount', 
+                index='sector', 
+                columns='stage', 
+                aggfunc='mean'
+            ).fillna(0)
+            
+            sector_avg_growth = sector_growth.groupby('sector')['growth_rate_amount'].mean().sort_values(ascending=False)
+            sorted_sectors = sector_avg_growth.index.tolist()
+            heatmap_data = heatmap_data.reindex(sorted_sectors)
+            
+            fig_heatmap = px.imshow(
+                heatmap_data,
+                color_continuous_scale='RdBu_r',
+                aspect="auto",
+                labels=dict(x="Funding Stage", y="Sector", color="Growth Rate (%)"),
+                zmin=-50,
+                zmax=50
+            )
+            
+            fig_heatmap.update_layout(
+                title=dict(
+                    text='SECTOR-STAGE GROWTH RATE HEATMAP',
+                    font=dict(size=16),
+                    x=0.5,
+                    xanchor='center'
+                ),
+                height=800,
+                xaxis=dict(
+                    title='Funding Stage',
+                    tickangle=-45
+                ),
+                yaxis=dict(
+                    title='Sector'
+                )
+            )
+            
+            st.plotly_chart(fig_heatmap, use_container_width=True)
+            create_download_buttons(fig_heatmap, "sector_stage_heatmap")
+    except Exception as e:
+        st.error(f"Error loading sector growth analysis: {str(e)}")
+    
+    try:
+        with open("runQL/Analysis2.json", "r") as f:
+            analysis2_data = json.load(f)
+        
+        st.subheader("📅 Monthly Investment Forecast (2025)")
+        
+        monthly_trends = pd.DataFrame(analysis2_data.get("monthly_trends_2025", []))
+        
+        if not monthly_trends.empty:
+            fig_monthly = go.Figure()
+            
+            monthly_trends['month_label'] = monthly_trends['month'].apply(lambda x: {
+                1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun',
+                7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dec'
+            }.get(x, ''))
+            
+            fig_monthly.add_trace(go.Bar(
+                x=monthly_trends['month_label'],
+                y=monthly_trends['predicted_amount'] / 1e6,
+                name='Predicted Investment',
+                marker_color='rgba(52, 152, 219, 0.8)',
+                text=[f"${x:.1f}M" for x in monthly_trends['predicted_amount'] / 1e6],
+                textposition='auto'
+            ))
+            
+            fig_monthly.add_trace(go.Scatter(
+                x=monthly_trends['month_label'],
+                y=monthly_trends['predicted_deal_count'],
+                name='Predicted Deal Count',
+                yaxis='y2',
+                mode='lines+markers',
+                line=dict(color='rgba(231, 76, 60, 0.8)', width=3),
+                marker=dict(size=8)
+            ))
+            
+            # fig_monthly.add_trace(go.Scatter(
+            #     x=monthly_trends['month_label'],
+            #     y=monthly_trends['growth_probability'] * 100,
+            #     name='Growth Probability',
+            #     yaxis='y3',
+            #     mode='lines',
+            #     line=dict(color='rgba(46, 204, 113, 0.8)', width=2, dash='dot')
+            # ))
+            
+            fig_monthly.update_layout(
+                title=dict(
+                    text='2025 MONTHLY INVESTMENT FORECAST',
+                    font=dict(size=16),
+                    x=0.5,
+                    xanchor='center'
+                ),
+                xaxis=dict(
+                    title='Month',
+                    tickangle=0,
+                    tickfont=dict(size=12)
+                ),
+                yaxis=dict(
+                    title='Predicted Investment ($M)',
+                    gridcolor='rgba(128, 128, 128, 0.2)',
+                    side='left'
+                ),
+                yaxis2=dict(
+                    title='Predicted Deal Count',
+                    overlaying='y',
+                    side='right',
+                    showgrid=False
+                ),
+                yaxis3=dict(
+                    title='Growth Probability (%)',
+                    overlaying='y',
+                    side='right',
+                    position=0.85,
+                    anchor='free',
+                    showgrid=False,
+                    range=[0, 100],
+                    ticksuffix='%'
+                ),
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                ),
+                height=600,
+                template='plotly_white',
+                hovermode='x unified'
+            )
+            
+            st.plotly_chart(fig_monthly, use_container_width=True)
+            create_download_buttons(fig_monthly, "monthly_forecast_2025")
+    except Exception as e:
+        st.error(f"Error loading monthly trends forecast: {str(e)}")
+    
+    try:
+        with open("runQL/Analysis3.json", "r") as f:
+            analysis3_data = json.load(f)
+        
+        st.subheader("🌍 Ecosystem Growth Forecast (2025)")
+        
+        ecosystem_growth = pd.DataFrame(analysis3_data.get("ecosystem_growth_2025", []))
+        
+        if not ecosystem_growth.empty:
+            ecosystem_growth = ecosystem_growth.sort_values('predicted_amount_2025', ascending=False)
+            
+            fig_eco = go.Figure()
+            
+            fig_eco.add_trace(go.Bar(
+                x=ecosystem_growth['ecosystem'],
+                y=ecosystem_growth['predicted_amount_2025'] / 1e6,
+                name='Predicted Investment 2025 ($M)',
+                marker_color='rgba(52, 152, 219, 0.8)',
+                text=[f"${x:.1f}M" for x in ecosystem_growth['predicted_amount_2025'] / 1e6],
+                textposition='auto'
+            ))
+            
+            fig_eco.add_trace(go.Bar(
+                x=ecosystem_growth['ecosystem'],
+                y=ecosystem_growth['actual_amount_2024'] / 1e6,
+                name='Actual Investment 2024 ($M)',
+                marker_color='rgba(52, 152, 219, 0.4)',
+                text=[f"${x:.1f}M" for x in ecosystem_growth['actual_amount_2024'] / 1e6],
+                textposition='auto'
+            ))
+            
+            # fig_eco.add_trace(go.Scatter(
+            #     x=ecosystem_growth['ecosystem'],
+            #     y=ecosystem_growth['amount_growth_rate'],
+            #     name='Projected Growth Rate (%)',
+            #     yaxis='y2',
+            #     mode='markers',
+            #     marker=dict(
+            #         size=12,
+            #         color=ecosystem_growth['growth_probability'] * 100,
+            #         colorscale='Viridis',
+            #         showscale=True,
+            #         colorbar=dict(title='Growth Probability (%)')
+            #     )
+            # ))
+            
+            fig_eco.update_layout(
+                title=dict(
+                    text='ECOSYSTEM INVESTMENT FORECAST (2025)',
+                    font=dict(size=16),
+                    x=0.5,
+                    xanchor='center'
+                ),
+                xaxis=dict(
+                    title='Ecosystem',
+                    tickangle=-45,
+                    tickfont=dict(size=12)
+                ),
+                yaxis=dict(
+                    title='Investment Amount ($M)',
+                    gridcolor='rgba(128, 128, 128, 0.2)'
+                ),
+                yaxis2=dict(
+                    title='Growth Rate (%)',
+                    overlaying='y',
+                    side='right',
+                    showgrid=False,
+                    ticksuffix='%'
+                ),
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                ),
+                height=600,
+                template='plotly_white',
+                hovermode='x unified',
+                barmode='group'
+            )
+            
+            st.plotly_chart(fig_eco, use_container_width=True)
+            create_download_buttons(fig_eco, "ecosystem_forecast_2025")
+            
+            st.markdown("### 📊 Detailed Ecosystem Growth Metrics")
+            
+            detail_df = ecosystem_growth[['ecosystem', 'predicted_amount_2025', 'actual_amount_2024', 
+                                         'amount_growth_rate', 'predicted_deals_2025', 'actual_deals_2024',
+                                         'deals_growth_rate', 'growth_probability']]
+            
+            detail_df['predicted_amount_2025'] = detail_df['predicted_amount_2025'] / 1e6
+            detail_df['actual_amount_2024'] = detail_df['actual_amount_2024'] / 1e6
+            detail_df['amount_growth_rate'] = detail_df['amount_growth_rate'].round(1).astype(str) + '%'
+            detail_df['deals_growth_rate'] = detail_df['deals_growth_rate'].round(1).astype(str) + '%'
+            detail_df['growth_probability'] = (detail_df['growth_probability'] * 100).round(0).astype(str) + '%'
+            
+            st.dataframe(
+                detail_df,
+                hide_index=True,
+                column_config={
+                    "ecosystem": st.column_config.TextColumn("Ecosystem", width="medium"),
+                    "predicted_amount_2025": st.column_config.NumberColumn("2025 Forecast ($M)", format="$%.1fM"),
+                    "actual_amount_2024": st.column_config.NumberColumn("2024 Actual ($M)", format="$%.1fM"),
+                    "amount_growth_rate": st.column_config.TextColumn("Amount Growth", width="small"),
+                    "predicted_deals_2025": st.column_config.NumberColumn("2025 Deals Forecast", format="%.1f"),
+                    "actual_deals_2024": st.column_config.NumberColumn("2024 Actual Deals", format="%d"),
+                    "deals_growth_rate": st.column_config.TextColumn("Deal Growth", width="small"),
+                    "growth_probability": st.column_config.TextColumn("Growth Probability", width="small")
+                }
+            )
+    except Exception as e:
+        st.error(f"Error loading ecosystem growth forecast: {str(e)}")
+
+@st.cache_data
 def create_download_buttons(fig, filename_prefix, width=None, height=None):
     return
     """Create download buttons for a plotly figure"""
@@ -4906,17 +5472,18 @@ elif page == "Ecosystem Statistical Analysis":
     display_ecosystem_statistical_analysis()
 
 elif page == "Predictive Insights":
-    st.header("🤖 Predictive Insights & Forecasting")
-    st.markdown(
-        """
-        <div class='insight-box'>
-        Machine learning predictions and forecasting insights for investment trends.
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    display_predictive_analytics()
+    # st.header("🤖 Predictive Insights & Forecasting")
+    # st.markdown(
+    #     """
+    #     <div class='insight-box'>
+    #     Machine learning predictions and forecasting insights for investment trends.
+    #     </div>
+    #     """,
+    #     unsafe_allow_html=True,
+    # )
 
-    display_model_predictions()
+    # display_model_predictions()
 
 elif page == "Venture Capital Heat Map":
     display_venture_capital_heatmap()
