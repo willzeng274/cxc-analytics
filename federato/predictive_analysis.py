@@ -20,6 +20,11 @@ import shutil
 import traceback
 from sklearn.impute import KNNImputer
 from sklearn.preprocessing import StandardScaler
+import pickle
+import base64
+import io
+import json
+from datetime import datetime
 
 torch.classes.__path__ = [os.path.join(torch.__path__[0], torch.classes.__file__)] 
 
@@ -70,7 +75,7 @@ def pad_sequences(sequences, maxlen):
 
 def perform_markov_chain_analysis(df):
     """Analyze event sequences using enhanced Markov Chain."""
-    st.subheader("🔄 Enhanced Markov Chain Analysis")
+    st.subheader("Markov Chain Analysis")
     st.write("""
     This analysis shows transition probabilities between events, considering both the event type
     and contextual information like time of day and device type.
@@ -157,7 +162,7 @@ def perform_markov_chain_analysis(df):
 
 def perform_hmm_analysis(df):
     """Analyze user behavior patterns using Hidden Markov Model."""
-    st.subheader("🎯 Hidden Markov Model Analysis")
+    st.subheader("Hidden Markov Model Analysis")
     st.write("""
     HMM analysis uncovers hidden states in user behavior, revealing underlying
     patterns that aren't immediately visible in the raw event sequence.
@@ -190,11 +195,38 @@ def perform_hmm_analysis(df):
     fig.update_layout(title='HMM State Transition Probabilities')
     st.plotly_chart(fig, use_container_width=True)
     
-    return model
+    # st.subheader("Test Prediction")
+    # with st.expander("Make a test prediction"):
+    #     test_sequence = st.multiselect(
+    #         "Select a sequence of events",
+    #         options=le.classes_,
+    #         default=le.classes_[:3] if len(le.classes_) >= 3 else le.classes_
+    #     )
+        
+    #     if st.button("Predict Next State") and test_sequence:
+    #         try:
+    #             encoded_sequence = [le.transform([event])[0] for event in test_sequence]
+                
+    #             sequence_array = np.array(encoded_sequence).reshape(-1, 1)
+                
+    #             state_sequence = model.predict(sequence_array)
+    #             last_state = state_sequence[-1]
+                
+    #             st.success(f"Predicted hidden state: {last_state}")
+                
+    #             st.write("Transition probabilities from this state:")
+    #             st.dataframe(pd.DataFrame({
+    #                 'To State': [f'State {i}' for i in range(n_states)],
+    #                 'Probability': model.transmat_[last_state]
+    #             }))
+    #         except Exception as e:
+    #             st.error(f"Error making prediction: {str(e)}")
+    
+    return model, le
 
 def perform_prophet_forecast(df):
     """Enhanced forecast using Facebook Prophet with multiple metrics."""
-    st.subheader("📈 Enhanced Prophet Time Series Forecast")
+    st.subheader("Enhanced Prophet Time Series Forecast")
     st.write("""
     Multi-metric forecasting that predicts various aspects of user behavior:
     - Event volumes by type
@@ -289,7 +321,7 @@ def perform_prophet_forecast(df):
         components = model.plot_components(forecast)
         st.pyplot(components)
         
-        st.subheader(f"📊 Key Insights for {metric_name.replace('_', ' ').title()}")
+        st.subheader(f"Key Insights for {metric_name.replace('_', ' ').title()}")
         
         growth_rate = ((forecast['yhat'].iloc[-1] - forecast['yhat'].iloc[0]) / 
                       forecast['yhat'].iloc[0] * 100)
@@ -312,7 +344,7 @@ def perform_prophet_forecast(df):
 
 def perform_arima_analysis(df):
     """Enhanced ARIMA analysis with multiple time series components."""
-    st.subheader("📊 Enhanced ARIMA Time Series Analysis")
+    st.subheader("Enhanced ARIMA Time Series Analysis")
     st.write("""
     Advanced time series analysis using ARIMA models to capture:
     - Short-term event patterns
@@ -462,8 +494,6 @@ class LSTMPredictor(nn.Module):
         super(LSTMPredictor, self).__init__()
         self.hidden_size = hidden_size
         self.num_layers = num_layers
-
-        # Bidirectional LSTM
         
         self.lstm = nn.LSTM(input_size, hidden_size, num_layers, 
                            batch_first=True, 
@@ -501,7 +531,7 @@ class LSTMPredictor(nn.Module):
 
 def perform_lstm_prediction(df):
     """Predict user engagement using LSTM."""
-    st.subheader("🧠 LSTM Neural Network Analysis")
+    st.subheader("LSTM Neural Network Analysis")
     
     st.write("Starting LSTM prediction process...")
     
@@ -524,11 +554,11 @@ def perform_lstm_prediction(df):
             
             if df.empty:
                 st.error("Empty DataFrame received")
-                return None, None
+                return None, None, None
                 
             if 'event_type' not in df.columns or 'session_id' not in df.columns:
                 st.error("Required columns missing from DataFrame")
-                return None, None
+                return None, None, None
             
             st.write("Debug: Encoding events...")
             le = LabelEncoder()
@@ -607,7 +637,7 @@ def perform_lstm_prediction(df):
                 
                 if sequence_count == 0:
                     st.error("No valid sequences could be created")
-                    return None, None
+                    return None, None, None
                 
                 sequences = sequences_mmap[:sequence_count].copy()
                 labels = labels_mmap[:sequence_count].copy()
@@ -664,7 +694,7 @@ def perform_lstm_prediction(df):
                     optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)
                     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2)
                     
-                    num_epochs = 40
+                    num_epochs = 10
                     train_losses = []
                     val_losses = []
                     train_accuracies = []
@@ -762,7 +792,7 @@ def perform_lstm_prediction(df):
                     
                     st.success("Training completed!")
                     
-                    st.subheader("📊 Model Performance Summary")
+                    st.subheader("Model Performance Summary")
                     col1, col2 = st.columns(2)
                     with col1:
                         st.metric("Final Training Accuracy", f"{train_accuracies[-1]:.2f}%")
@@ -771,12 +801,12 @@ def perform_lstm_prediction(df):
                         st.metric("Final Validation Accuracy", f"{val_accuracies[-1]:.2f}%")
                         st.metric("Final Validation Loss", f"{val_losses[-1]:.4f}")
                     
-                    return model, (train_losses, val_losses, train_accuracies, val_accuracies)
+                    return model, (train_losses, val_losses, train_accuracies, val_accuracies), le
                     
             except Exception as e:
                 st.error(f"Error in sequence processing: {str(e)}")
                 st.write("Debug: Full traceback:", traceback.format_exc())
-                return None, None
+                return None, None, None
             finally:
                 try:
                     shutil.rmtree(temp_dir)
@@ -786,11 +816,11 @@ def perform_lstm_prediction(df):
     except Exception as e:
         st.error(f"Error in LSTM prediction: {str(e)}")
         st.write("Debug: Full traceback:", traceback.format_exc())
-        return None, None
+        return None, None, None
 
 def perform_kmeans_clustering(df):
     """Cluster users based on behavior patterns."""
-    st.subheader("👥 User Behavior Clustering")
+    st.subheader("User Behavior Clustering")
     st.write("""
     KMeans clustering groups events with similar patterns,
     helping identify distinct behavioral segments.
@@ -870,7 +900,7 @@ def perform_kmeans_clustering(df):
     return kmeans, cluster_stats
 
 def perform_xgboost_prediction(df):
-    st.subheader("🎯 Next Event Prediction")
+    st.subheader("Next Event Prediction")
     
     st.sidebar.subheader("XGBoost Configuration")
     sample_size = st.sidebar.slider("Sample Size (thousands)", 
@@ -1029,12 +1059,46 @@ def perform_xgboost_prediction(df):
                         orientation='h')
             st.plotly_chart(fig, use_container_width=True)
             
-            return model, importance_df
+            # st.subheader("Test Prediction")
+            # with st.expander("Make a test prediction"):
+            #     col1, col2 = st.columns(2)
+            #     with col1:
+            #         test_hour = st.slider("Hour of Day", 0, 23, 12)
+            #         test_weekday = st.slider("Day of Week (0=Monday, 6=Sunday)", 0, 6, 2)
+            #     with col2:
+            #         test_prev_event = st.selectbox("Previous Event", event_encoder.classes_)
+            #         test_device = st.selectbox("Device", le_device.classes_)
+                
+            #     if st.button("Predict"):
+            #         try:
+            #             prev_event_encoded = event_encoder.transform([test_prev_event])[0]
+            #             device_encoded = le_device.transform([test_device])[0]
+                        
+            #             X_test = np.array([[test_hour, test_weekday, prev_event_encoded, device_encoded]])
+                        
+            #             prediction = model.predict(X_test)[0]
+            #             prediction_proba = model.predict_proba(X_test)[0]
+                        
+            #             top_indices = prediction_proba.argsort()[-5:][::-1]
+            #             top_events = [event_encoder.classes_[i] for i in top_indices]
+            #             top_probs = [prediction_proba[i] for i in top_indices]
+                        
+            #             st.success(f"Predicted next event: **{event_encoder.classes_[prediction]}**")
+                        
+            #             result_df = pd.DataFrame({
+            #                 "Event": top_events,
+            #                 "Probability": top_probs
+            #             })
+            #             st.dataframe(result_df)
+            #         except Exception as e:
+            #             st.error(f"Error making prediction: {str(e)}")
+            
+            return model, importance_df, event_encoder, le_device
             
     except Exception as e:
         st.error(f"Error in XGBoost training: {str(e)}")
         st.write("Full error details:", str(e))
-        return None, None
+        return None, None, None, None
 
 def show_model_explanation(model_name):
     """Show detailed explanation for each model type."""
@@ -1186,6 +1250,12 @@ def preprocess_data(df):
         df = df.drop(columns=single_value_cols)
         columns_after_each_step['after_single_value_drop'] = set(df.columns)
         st.write(f"Dropped {len(single_value_cols)} columns with only 1 unique value: {sorted(list(single_value_cols))}")
+
+        initial_rows = len(df)
+        df = df[df['event_time'] >= '2025-01-01']
+        columns_after_each_step['after_date_filter'] = set(df.columns)
+        dropped_rows = initial_rows - len(df)
+        st.write(f"Dropped {dropped_rows:,} rows with event_time before 2025-01-01")
         
         columns_to_drop = [
             'insert_id', '$insert_id', 'amplitude_id', 'device_id', 'uuid', 'user_properties',
@@ -1316,6 +1386,365 @@ def preprocess_data(df):
         
         return df
 
+def export_model(model, model_type, additional_data=None):
+    """
+    Export a trained model as a downloadable file.
+    
+    Args:
+        model: The trained model to export
+        model_type: String indicating the type of model
+        additional_data: Dictionary containing any additional data needed for the model
+    
+    Returns:
+        A download link for the serialized model
+    """
+    try:
+        buffer = io.BytesIO()
+        
+        export_data = {
+            'model': model,
+            'model_type': model_type,
+            'export_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'additional_data': additional_data
+        }
+        
+        pickle.dump(export_data, buffer)
+        buffer.seek(0)
+        
+        b64 = base64.b64encode(buffer.read()).decode()
+        filename = f"{model_type.lower().replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pkl"
+        href = f'<a href="data:application/octet-stream;base64,{b64}" download="{filename}">Download {model_type} Model</a>'
+        
+        return href
+    except Exception as e:
+        st.error(f"Error exporting model: {str(e)}")
+        return None
+
+def create_prediction_playground(model, model_type, additional_data=None):
+    """
+    Create an interactive playground for predicting the next action based on a sequence of events.
+    
+    Args:
+        model: The trained model to use for predictions
+        model_type: String indicating the type of model
+        additional_data: Dictionary containing any additional data needed for the model
+    """
+    st.write("Select a sequence of events and see what the model predicts will happen next.")
+    
+    event_options = [
+        'account-lines::layout:render', 'account-lines:::view',
+        'account-lines::widget:render',
+        'account-lines::configurable-table:render',
+        'application-window-opened', '::nav-header:action-center-click',
+        'action-center:::view', 'action-center:action-details::view',
+        'action-center:action-details:response-form:submit-click',
+        'account:::view', 'session_start', 'session_end',
+        'action-center:::close-click', ':all-accounts:layout:render',
+        ':all-accounts::view', ':all-accounts:configurable-table:render',
+        ':all-accounts:widget:render', '::configurable-table:render',
+        '::widget:render', '::layout:render',
+        'submissions:exposures-create::submit-click',
+        'submissions:all-exposures:configurable-table:render',
+        'submissions:all-exposures::view',
+        'submissions:exposures-create::view',
+        'submissions:all-policy:configurable-table:render',
+        'submissions:all-policy::view',
+        'account-lines:::change-rating-click',
+        'account-property-rating:perils:configurable-table:render',
+        'account-property-rating:perils::view',
+        'dashboard:my-book:layout:render', 'dashboard:my-book::view',
+        'dashboard:my-book:widget:render',
+        'dashboard:my-book:configurable-table:render',
+        'triaged-submission-list:my-book:configurable-table:render',
+        'triaged-submission-list:my-book::view',
+        'submissions:all-renewal::view',
+        'submissions:renewal-create::view',
+        'submissions:renewal-create::submit-click',
+        'submissions:all-renewal:configurable-table:render',
+        'submissions:renewal-definition::view',
+        'submissions:triaged_submissions-definition::view',
+        'triaged-submission:triaged_submissions-definition:layout:render',
+        'triaged-submission:triaged_submissions-definition::view',
+        'triaged-submission:triaged_submissions-definition:widget:render',
+        'triaged-submission-list:triaged_submissions-definition:configurable-table:render',
+        'triaged-submission-list:triaged_submissions-definition::view',
+        'submissions:policy-definition::view',
+        'submissions:policy-definition:configurable-table:render',
+        'submissions:policy-definition::submit-click',
+        'account-property-rating:perils:perils-table:add-click',
+        'account-property-rating:perils:perils-table:edit-click',
+        'action-center:::submit-click',
+        'submissions:all-ingest_policy_through_pd:configurable-table:render',
+        'submissions:all-ingest_policy_through_pd::view',
+        'submissions:ingest_policy_through_pd-create::view',
+        'account-lines::templeton-docs:create-document-click',
+        'submissions:policy-create::view',
+        'dashboard:portfolio-insights:layout:render',
+        'dashboard:portfolio-insights::view',
+        'dashboard:portfolio-insights:widget:render',
+        'account-lines::construction-excess-rater:modify-existing-quote-click',
+        'submissions:policy-create:configurable-table:render',
+        'submissions:policy-create::submit-click',
+        'dashboard:my-book::action-click', 'EMPTY',
+        'submissions:all-financial_lines::view',
+        'submissions:all-account:configurable-table:render',
+        'submissions:all-account::view',
+        'submissions:exposures-definition::view',
+        'dashboard:my-book:recent-actions-table:account-click',
+        'account-property-rating:perils:model-request-details:save-click',
+        'dashboard:my-book:recent-actions-table:action-click',
+        'assigned-email-thread:::email-thread-expansion',
+        'assigned-email-thread:::document-download-click',
+        'account-auto-rating:::view',
+        'account-auto-rating::configurable-table:render',
+        '::nav-header:help-menu-opened'
+    ]
+    
+    event_options.extend([
+        'all-accounts:renewals:layout:render',
+        'all-accounts:renewals::view',
+        'all-accounts:renewals:configurable-table:render',
+        'all-accounts:new-business:layout:render',
+        'all-accounts:new-business::view',
+        'all-accounts:new-business:configurable-table:render'
+    ])
+    
+    event_options.sort()
+    
+    if 'playground_sequence' not in st.session_state:
+        st.session_state.playground_sequence = []
+    
+    sequence_container = st.container()
+    
+    with sequence_container:
+        st.write("Select events for your sequence:")
+        selected_event = st.selectbox("Add an event to the sequence", [""] + event_options)
+        
+        if selected_event and st.button("Add Event"):
+            # if len(st.session_state.playground_sequence) < 5:
+            st.session_state.playground_sequence.append(selected_event)
+            # else:
+            #     st.warning("Maximum sequence length reached (5 events).")
+        
+        if st.session_state.playground_sequence:
+            st.write("Current sequence:")
+            for i, event in enumerate(st.session_state.playground_sequence):
+                col1, col2 = st.columns([0.9, 0.1])
+                with col1:
+                    st.write(f"{i+1}. {event}")
+                with col2:
+                    if st.button("✖", key=f"remove_{i}"):
+                        st.session_state.playground_sequence.pop(i)
+                        st.rerun()
+    
+    if st.button("Predict Next Event"):
+        sequence = st.session_state.playground_sequence
+        if not sequence:
+            st.warning("Please select at least one event in the sequence.")
+        else:
+            st.write(f"Selected sequence: {sequence}")
+            
+            if model_type == "Markov Chain":
+                if additional_data and 'transition_probs' in additional_data:
+                    transition_probs = additional_data['transition_probs']
+                    
+                    last_event = sequence[-1]
+                    
+                    next_events = []
+                    
+                    for time_of_day in ['morning', 'afternoon', 'evening', 'night']:
+                        event_state = f"{last_event}|{time_of_day}"
+                        if event_state in transition_probs:
+                            for next_event, prob in transition_probs[event_state].items():
+                                next_event_name = next_event.split('|')[0]
+                                next_events.append((next_event_name, prob))
+                    
+                    if next_events:
+                        next_events.sort(key=lambda x: x[1], reverse=True)
+                        
+                        st.subheader("Top 5 Most Likely Next Events")
+                        result_df = pd.DataFrame(next_events[:5], columns=["Event", "Probability"])
+                        st.dataframe(result_df)
+                        
+                        fig = px.bar(result_df, x="Probability", y="Event", orientation='h',
+                                    title="Next Event Probabilities",
+                                    labels={"Probability": "Probability", "Event": "Event"})
+                        st.plotly_chart(fig, use_container_width=True)
+                    else:
+                        st.info(f"No transition data available for event '{last_event}'.")
+                else:
+                    st.error("Transition probability data not available. Please retrain the model.")
+            
+            elif model_type == "XGBoost Prediction":
+                if model is not None and additional_data and 'event_encoder' in additional_data and 'le_device' in additional_data:
+                    event_encoder = additional_data['event_encoder']
+                    le_device = additional_data['le_device']
+                    
+                    hour = 12
+                    weekday = 2
+                    
+                    device_options = le_device.classes_.tolist()
+                    default_device = device_options[0] if device_options else None
+                    
+                    with st.expander("Customize Context Features"):
+                        hour = st.slider("Hour of Day", 0, 23, hour)
+                        weekday = st.slider("Day of Week (0=Monday, 6=Sunday)", 0, 6, weekday)
+                        device = st.selectbox("Device", device_options, 0) if device_options else None
+                    
+                    try:
+                        if not sequence or not device_options:
+                            st.warning("Please ensure you have selected at least one event and device options are available.")
+                            return
+                            
+                        prev_event_encoded = event_encoder.transform([sequence[-1]])[0]
+                        device_encoded = le_device.transform([device])[0]
+                        
+                        X_test = np.array([[hour, weekday, prev_event_encoded, device_encoded]])
+                        
+                        prediction = model.predict(X_test)[0]
+                        prediction_proba = model.predict_proba(X_test)[0]
+                        
+                        top_indices = prediction_proba.argsort()[-5:][::-1]
+                        top_events = [event_encoder.classes_[i] for i in top_indices]
+                        top_probs = [prediction_proba[i] for i in top_indices]
+                        
+                        st.subheader("Predicted Next Event")
+                        st.success(f"**{event_encoder.classes_[prediction]}**")
+                        
+                        st.subheader("Top 5 Most Likely Next Events")
+                        result_df = pd.DataFrame({
+                            "Event": top_events,
+                            "Probability": top_probs
+                        })
+                        st.dataframe(result_df)
+                        
+                        fig = px.bar(result_df, x="Probability", y="Event", orientation='h',
+                                    title="Next Event Probabilities",
+                                    labels={"Probability": "Probability", "Event": "Event"})
+                        st.plotly_chart(fig, use_container_width=True)
+                    except Exception as e:
+                        st.error(f"Error making prediction: {str(e)}")
+                        st.write(f"Error details: {traceback.format_exc()}")
+                else:
+                    st.error("Model or encoder data not available. Please retrain the model.")
+            
+            elif model_type == "LSTM Prediction":
+                if model is not None and additional_data and 'event_encoder' in additional_data:
+                    event_encoder = additional_data['event_encoder']
+                    
+                    try:
+                        encoded_sequence = [event_encoder.transform([event])[0] for event in sequence]
+                        
+                        max_len = 10
+                        if len(encoded_sequence) < max_len:
+                            encoded_sequence = [0] * (max_len - len(encoded_sequence)) + encoded_sequence
+                        else:
+                            encoded_sequence = encoded_sequence[-max_len:]
+                        
+                        sequence_tensor = torch.FloatTensor(encoded_sequence).unsqueeze(0).unsqueeze(-1)
+                        
+                        model.eval()
+                        with torch.no_grad():
+                            output = model(sequence_tensor)
+                            probabilities = torch.softmax(output, dim=1).cpu().numpy()[0]
+                        
+                        top_indices = probabilities.argsort()[-5:][::-1]
+                        top_events = [event_encoder.classes_[i] for i in top_indices]
+                        top_probs = [probabilities[i] for i in top_indices]
+                        
+                        st.subheader("Predicted Next Event")
+                        st.success(f"**{top_events[0]}**")
+                        
+                        st.subheader("Top 5 Most Likely Next Events")
+                        result_df = pd.DataFrame({
+                            "Event": top_events,
+                            "Probability": top_probs
+                        })
+                        st.dataframe(result_df)
+                        
+                        fig = px.bar(result_df, x="Probability", y="Event", orientation='h',
+                                    title="Next Event Probabilities",
+                                    labels={"Probability": "Probability", "Event": "Event"})
+                        st.plotly_chart(fig, use_container_width=True)
+                    except Exception as e:
+                        st.error(f"Error making prediction: {str(e)}")
+                        st.write(f"Error details: {traceback.format_exc()}")
+                else:
+                    st.error("Model or encoder data not available. Please retrain the model.")
+            
+            elif model_type == "Hidden Markov Model":
+                if model is not None and additional_data and 'event_encoder' in additional_data:
+                    event_encoder = additional_data['event_encoder']
+                    
+                    try:
+                        encoded_sequence = [event_encoder.transform([event])[0] for event in sequence]
+                        
+                        sequence_array = np.array(encoded_sequence).reshape(-1, 1)
+                        
+                        state_sequence = model.predict(sequence_array)
+                        last_state = state_sequence[-1]
+                        
+                        next_state_probs = model.transmat_[last_state]
+                        
+                        top_state_indices = next_state_probs.argsort()[-5:][::-1]
+                        
+                        event_probs = {}
+                        n_samples = 1000
+                        
+                        for state_idx in top_state_indices:
+                            samples = np.random.normal(
+                                model.means_[state_idx][0], 
+                                np.sqrt(model.covars_[state_idx][0][0]), 
+                                n_samples
+                            )
+                            
+                            samples = np.clip(np.round(samples).astype(int), 0, len(event_encoder.classes_) - 1)
+                            
+                            unique, counts = np.unique(samples, return_counts=True)
+                            
+                            for event_idx, count in zip(unique, counts):
+                                event_prob = (count / n_samples) * next_state_probs[state_idx]
+                                if event_idx in event_probs:
+                                    event_probs[event_idx] += event_prob
+                                else:
+                                    event_probs[event_idx] = event_prob
+                        
+                        top_events_with_probs = sorted(event_probs.items(), key=lambda x: x[1], reverse=True)[:5]
+                        top_indices = [idx for idx, _ in top_events_with_probs]
+                        top_probs = [prob for _, prob in top_events_with_probs]
+                        
+                        total_prob = sum(top_probs)
+                        if total_prob > 0:
+                            top_probs = [p/total_prob for p in top_probs]
+                        
+                        top_events = [event_encoder.classes_[i] for i in top_indices]
+                        
+                        st.subheader("Predicted Next Event")
+                        st.success(f"**{top_events[0]}**")
+                        
+                        st.subheader("Top 5 Most Likely Next Events")
+                        result_df = pd.DataFrame({
+                            "Event": top_events,
+                            "Probability": top_probs
+                        })
+                        st.dataframe(result_df)
+                        
+                        fig = px.bar(result_df, x="Probability", y="Event", orientation='h',
+                                    title="Next Event Probabilities",
+                                    labels={"Probability": "Probability", "Event": "Event"})
+                        st.plotly_chart(fig, use_container_width=True)
+                    except Exception as e:
+                        st.error(f"Error making prediction: {str(e)}")
+                        st.write(f"Error details: {traceback.format_exc()}")
+                else:
+                    st.error("Model or encoder data not available. Please retrain the model.")
+            else:
+                st.info(f"Real-time prediction is not supported for {model_type} models.")
+    
+    if st.button("Clear Sequence"):
+        st.session_state.playground_sequence = []
+        st.rerun()
+
 def main():
     st.set_page_config(
         page_title="Predictive Analytics Dashboard",
@@ -1328,65 +1757,292 @@ def main():
 
     show_dashboard_overview()
     
-    try:
-        df = load_and_preprocess_data()
-        
-        st.subheader("Initial Dataset Overview")
-        show_data_summary(df)
-        
-        df = create_time_features(df)
-        
-        df = preprocess_data(df)
-        
-        st.subheader("Preprocessed Dataset Overview")
-        show_data_summary(df)
-        
-        analysis_type = st.sidebar.selectbox(
-            "Choose Analysis Type",
-            ["Markov Chain", "Hidden Markov Model", "Prophet Forecast",
-             "ARIMA Analysis", "LSTM Prediction", "KMeans Clustering",
-             "XGBoost Prediction"]
-        )
-        
-        show_model_explanation(analysis_type)
-        
-        progress_bar = st.progress(0)
-        st.write("Running analysis...")
-        
-        if analysis_type == "Markov Chain":
-            transition_probs, avg_transition_times = perform_markov_chain_analysis(df)
-            progress_bar.progress(100)
-            
-        elif analysis_type == "Hidden Markov Model":
-            model = perform_hmm_analysis(df)
-            progress_bar.progress(100)
-            
-        elif analysis_type == "Prophet Forecast":
-            forecasts = perform_prophet_forecast(df)
-            progress_bar.progress(100)
-            
-        elif analysis_type == "ARIMA Analysis":
-            results = perform_arima_analysis(df)
-            progress_bar.progress(100)
-            
-        elif analysis_type == "LSTM Prediction":
-            model, metrics = perform_lstm_prediction(df)
-            progress_bar.progress(100)
-            
-        elif analysis_type == "KMeans Clustering":
-            model, stats = perform_kmeans_clustering(df)
-            progress_bar.progress(100)
-            
-            st.subheader("Cluster Statistics")
-            st.dataframe(stats)
-            
-        elif analysis_type == "XGBoost Prediction":
-            model, importance = perform_xgboost_prediction(df)
-            progress_bar.progress(100)
+    if 'data_loaded' not in st.session_state:
+        st.session_state.data_loaded = False
+        st.session_state.df = None
+        st.session_state.df_processed = None
+        st.session_state.current_model = None
+        st.session_state.current_model_type = None
+        st.session_state.additional_data = None
+        st.session_state.model_trained = False
     
-    except Exception as e:
-        st.error(f"Error performing analysis: {str(e)}")
-        st.write("Please ensure all required data files are present and properly formatted.")
+    tabs = st.tabs(["Analysis", "Playground", "Export"])
+    
+    with tabs[0]:
+        try:
+            if not st.session_state.data_loaded:
+                with st.spinner("Loading and preprocessing data..."):
+                    df = load_and_preprocess_data()
+                    st.session_state.df = df
+                    
+                    st.subheader("Initial Dataset Overview")
+                    show_data_summary(df)
+                    
+                    df = create_time_features(df)
+                    
+                    df_processed = preprocess_data(df)
+                    st.session_state.df_processed = df_processed
+                    
+                    st.subheader("Preprocessed Dataset Overview")
+                    show_data_summary(df_processed)
+                    
+                    st.session_state.data_loaded = True
+            else:
+                df = st.session_state.df
+                df_processed = st.session_state.df_processed
+            
+            analysis_type = st.sidebar.selectbox(
+                "Choose Analysis Type",
+                ["Markov Chain", "Hidden Markov Model", "Prophet Forecast",
+                 "ARIMA Analysis", "LSTM Prediction", "KMeans Clustering",
+                 "XGBoost Prediction"]
+            )
+            
+            show_model_explanation(analysis_type)
+            
+            force_retrain = st.sidebar.button("Train/Retrain Model")
+            
+            run_analysis = False
+            if force_retrain:
+                run_analysis = True
+                st.session_state.model_trained = False
+            elif st.session_state.current_model_type != analysis_type:
+                st.session_state.model_trained = False
+
+            if not st.session_state.model_trained:
+                st.info(f"No {analysis_type} model has been trained yet. Click 'Train/Retrain Model' to train.")
+            
+            if run_analysis:
+                progress_bar = st.progress(0)
+                st.write("Running analysis...")
+                
+                if analysis_type == "Markov Chain":
+                    transition_probs, avg_transition_times = perform_markov_chain_analysis(df_processed)
+                    progress_bar.progress(100)
+                    
+                    st.session_state.current_model = None
+                    st.session_state.current_model_type = analysis_type
+                    st.session_state.additional_data = {
+                        'transition_probs': transition_probs,
+                        'avg_transition_times': avg_transition_times
+                    }
+                    st.session_state.model_trained = True
+                    
+                elif analysis_type == "Hidden Markov Model":
+                    df_hmm = df_processed.copy()
+                    
+                    le = LabelEncoder()
+                    df_hmm['event_encoded'] = le.fit_transform(df_hmm['event_type'])
+                    
+                    model, le = perform_hmm_analysis(df_hmm)
+                    progress_bar.progress(100)
+                    
+                    st.session_state.current_model = model
+                    st.session_state.current_model_type = analysis_type
+                    st.session_state.additional_data = {
+                        'event_encoder': le
+                    }
+                    st.session_state.model_trained = True
+                    
+                elif analysis_type == "Prophet Forecast":
+                    forecasts = perform_prophet_forecast(df_processed)
+                    progress_bar.progress(100)
+                    
+                    st.session_state.current_model = forecasts
+                    st.session_state.current_model_type = analysis_type
+                    st.session_state.additional_data = None
+                    st.session_state.model_trained = True
+                    
+                elif analysis_type == "ARIMA Analysis":
+                    results = perform_arima_analysis(df_processed)
+                    progress_bar.progress(100)
+                    
+                    st.session_state.current_model = results
+                    st.session_state.current_model_type = analysis_type
+                    st.session_state.additional_data = None
+                    st.session_state.model_trained = True
+                    
+                elif analysis_type == "LSTM Prediction":
+                    df_lstm = df_processed.copy()
+                    
+                    le = LabelEncoder()
+                    df_lstm['event_encoded'] = le.fit_transform(df_lstm['event_type'])
+                    
+                    model, metrics, le = perform_lstm_prediction(df_lstm)
+                    progress_bar.progress(100)
+                    
+                    st.session_state.current_model = model
+                    st.session_state.current_model_type = analysis_type
+                    st.session_state.additional_data = {
+                        'event_encoder': le,
+                        'metrics': metrics
+                    }
+                    st.session_state.model_trained = True
+                    
+                elif analysis_type == "KMeans Clustering":
+                    model, stats = perform_kmeans_clustering(df_processed)
+                    progress_bar.progress(100)
+                    
+                    st.subheader("Cluster Statistics")
+                    st.dataframe(stats)
+                    
+                    st.session_state.current_model = model
+                    st.session_state.current_model_type = analysis_type
+                    st.session_state.additional_data = {
+                        'stats': stats
+                    }
+                    st.session_state.model_trained = True
+                    
+                elif analysis_type == "XGBoost Prediction":
+                    model, importance, event_encoder, le_device = perform_xgboost_prediction(df_processed)
+                    progress_bar.progress(100)
+                    
+                    st.session_state.current_model = model
+                    st.session_state.current_model_type = analysis_type
+                    
+                    if model is not None and event_encoder is not None and le_device is not None:
+                        st.session_state.additional_data = {
+                            'importance': importance,
+                            'event_encoder': event_encoder,
+                            'le_device': le_device
+                        }
+                        st.session_state.model_trained = True
+                    else:
+                        st.session_state.additional_data = None
+                        st.session_state.model_trained = False
+                
+                if st.session_state.model_trained:
+                    st.success(f"{analysis_type} model trained successfully!")
+            
+            if st.sidebar.button("Clear Cache and Reload Data"):
+                st.session_state.data_loaded = False
+                st.session_state.df = None
+                st.session_state.df_processed = None
+                st.session_state.current_model = None
+                st.session_state.current_model_type = None
+                st.session_state.additional_data = None
+                st.session_state.model_trained = False
+                st.rerun()
+        
+        except Exception as e:
+            st.error(f"Error performing analysis: {str(e)}")
+            st.write("Please ensure all required data files are present and properly formatted.")
+            st.write("Full error details:", traceback.format_exc())
+    
+    with tabs[1]:
+        st.header("Real-Time Prediction Playground")
+        
+        if not st.session_state.data_loaded:
+            st.warning("Please run an analysis first to use the playground.")
+        elif not st.session_state.model_trained:
+            st.warning(f"Please train a {st.session_state.current_model_type if st.session_state.current_model_type else 'model'} first to use the playground.")
+        elif st.session_state.current_model_type not in ["Markov Chain", "XGBoost Prediction", "LSTM Prediction", "Hidden Markov Model"]:
+            st.info(f"Real-time prediction is not supported for {st.session_state.current_model_type} models.")
+        else:
+            create_prediction_playground(
+                st.session_state.current_model,
+                st.session_state.current_model_type,
+                st.session_state.additional_data
+            )
+    
+    with tabs[2]:
+        st.header("Export Model")
+        
+        if not st.session_state.data_loaded:
+            st.warning("Please run an analysis first to export a model.")
+        elif not st.session_state.model_trained:
+            st.warning("No model has been trained yet. Please train a model first.")
+        else:
+            st.write(f"Current model: **{st.session_state.current_model_type}**")
+            
+            export_format = st.selectbox(
+                "Export Format",
+                ["Pickle (.pkl)", "JSON (.json)"]
+            )
+            
+            if st.button("Generate Export"):
+                if export_format == "Pickle (.pkl)":
+                    export_link = export_model(
+                        st.session_state.current_model,
+                        st.session_state.current_model_type,
+                        st.session_state.additional_data
+                    )
+                    
+                    if export_link:
+                        st.markdown(export_link, unsafe_allow_html=True)
+                    else:
+                        st.error("Failed to generate export.")
+                
+                elif export_format == "JSON (.json)":
+                    try:
+                        if st.session_state.current_model_type == "Markov Chain":
+                            export_data = {
+                                'model_type': st.session_state.current_model_type,
+                                'export_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                'transition_probs': {
+                                    k: {k2: float(v2) for k2, v2 in v.items()}
+                                    for k, v in st.session_state.additional_data['transition_probs'].items()
+                                }
+                            }
+                            
+                            json_str = json.dumps(export_data, indent=2)
+                            b64 = base64.b64encode(json_str.encode()).decode()
+                            filename = f"markov_chain_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                            href = f'<a href="data:application/json;base64,{b64}" download="{filename}">Download Markov Chain Model (JSON)</a>'
+                            
+                            st.markdown(href, unsafe_allow_html=True)
+                        else:
+                            st.warning("JSON export is currently only supported for Markov Chain models.")
+                    except Exception as e:
+                        st.error(f"Error exporting model to JSON: {str(e)}")
+            
+            with st.expander("How to Use Exported Models"):
+                st.markdown("""
+                ### Using Exported Models
+                
+                #### Pickle Format (.pkl)
+                Pickle files contain the serialized model and can be loaded in Python:
+                
+                ```python
+                import pickle
+                
+                # Load the model
+                with open('model.pkl', 'rb') as f:
+                    export_data = pickle.load(f)
+                
+                model = export_data['model']
+                model_type = export_data['model_type']
+                additional_data = export_data['additional_data']
+                
+                # Use the model for predictions
+                # (The exact code depends on the model type)
+                ```
+                
+                #### JSON Format (.json)
+                JSON files contain a simplified version of the model and can be loaded in any language:
+                
+                ```python
+                import json
+                
+                # Load the model
+                with open('model.json', 'r') as f:
+                    export_data = json.load(f)
+                
+                model_type = export_data['model_type']
+                
+                # For Markov Chain models
+                if model_type == 'Markov Chain':
+                    transition_probs = export_data['transition_probs']
+                    
+                    # Example: Get the most likely next event
+                    def predict_next_event(current_event, time_of_day):
+                        event_state = f"{current_event}|{time_of_day}"
+                        if event_state in transition_probs:
+                            next_events = transition_probs[event_state]
+                            return max(next_events.items(), key=lambda x: x[1])[0]
+                        return None
+                ```
+                """)
 
 if __name__ == "__main__":
     main() 
