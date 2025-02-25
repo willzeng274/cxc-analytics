@@ -1497,17 +1497,14 @@ def create_prediction_playground(model, model_type, additional_data=None):
         'assigned-email-thread:::document-download-click',
         'account-auto-rating:::view',
         'account-auto-rating::configurable-table:render',
-        '::nav-header:help-menu-opened'
-    ]
-    
-    event_options.extend([
+        '::nav-header:help-menu-opened',
         'all-accounts:renewals:layout:render',
         'all-accounts:renewals::view',
         'all-accounts:renewals:configurable-table:render',
         'all-accounts:new-business:layout:render',
         'all-accounts:new-business::view',
         'all-accounts:new-business:configurable-table:render'
-    ])
+    ]
     
     event_options.sort()
     

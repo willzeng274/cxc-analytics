@@ -241,6 +241,28 @@ def analyze_user_journey(df):
             'action-center:::view',
             'action-center:action-details::view',
             'action-center:::submit-click'
+        ],
+        'dashboard_navigation': [
+            'dashboard:my-book::view',
+            'dashboard:my-book:widget:render',
+            'dashboard:my-book::action-click'
+        ],
+        'submission_workflow': [
+            'submissions:all-account::view',
+            'submissions:all-policy::view',
+            'submissions:policy-create::view',
+            'submissions:policy-create::submit-click'
+        ],
+        'property_rating': [
+            'account-lines:::view',
+            'account-property-rating:perils::view',
+            'account-property-rating:perils:perils-table:edit-click',
+            'account-property-rating:perils:model-request-details:save-click'
+        ],
+        'renewal_process': [
+            'submissions:all-renewal::view',
+            'submissions:renewal-create::view',
+            'submissions:renewal-create::submit-click'
         ]
     }
     
@@ -250,6 +272,8 @@ def analyze_user_journey(df):
         for step in funnel_steps:
             users_at_step = df[df['event_type'] == step]['user_id'].nunique()
             step_counts.append(int(users_at_step))
+
+        print("Adding funnel: ", funnel_name)
         
         funnel_analysis[funnel_name] = {
             'steps': funnel_steps,

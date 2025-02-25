@@ -525,6 +525,80 @@
           86.4,
           73.61111111111111
         ]
+      },
+      "dashboard_navigation": {
+        "steps": [
+          "dashboard:my-book::view",
+          "dashboard:my-book:widget:render",
+          "dashboard:my-book::action-click"
+        ],
+        "user_counts": [
+          557,
+          503,
+          86
+        ],
+        "conversion_rates": [
+          100.0,
+          90.30520646319569,
+          17.09741550695825
+        ]
+      },
+      "submission_workflow": {
+        "steps": [
+          "submissions:all-account::view",
+          "submissions:all-policy::view",
+          "submissions:policy-create::view",
+          "submissions:policy-create::submit-click"
+        ],
+        "user_counts": [
+          170,
+          108,
+          53,
+          12
+        ],
+        "conversion_rates": [
+          100.0,
+          63.52941176470588,
+          49.074074074074076,
+          22.641509433962266
+        ]
+      },
+      "property_rating": {
+        "steps": [
+          "account-lines:::view",
+          "account-property-rating:perils::view",
+          "account-property-rating:perils:perils-table:edit-click",
+          "account-property-rating:perils:model-request-details:save-click"
+        ],
+        "user_counts": [
+          506,
+          64,
+          28,
+          24
+        ],
+        "conversion_rates": [
+          100.0,
+          12.648221343873518,
+          43.75,
+          85.71428571428571
+        ]
+      },
+      "renewal_process": {
+        "steps": [
+          "submissions:all-renewal::view",
+          "submissions:renewal-create::view",
+          "submissions:renewal-create::submit-click"
+        ],
+        "user_counts": [
+          21,
+          11,
+          7
+        ],
+        "conversion_rates": [
+          100.0,
+          52.38095238095239,
+          63.63636363636363
+        ]
       }
     }
   },

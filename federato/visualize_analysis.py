@@ -421,109 +421,6 @@ def create_user_journey_plots(results):
             fig.update_layout(title=f"{funnel_name.replace('_', ' ').title()} Funnel")
             st.plotly_chart(fig, use_container_width=True)
     
-        st.subheader("Conversion Funnels")
-        
-        # Keep original funnels
-        original_funnels = results['journey_analysis']['conversion_funnels']
-        
-        # Add new funnels
-        additional_funnels = {
-            'rating_flow': {
-                'steps': [
-                    'account-lines::widget:render',
-                    'account-lines::configurable-table:render', 
-                    'account-lines:::view',
-                    'account-lines:::change-rating-click',
-                    'account-lines::templeton-docs:create-document-click'
-                ],
-                'user_counts': [428058, 257224, 108249, 9501, 2927],
-                'conversion_rates': [100, 60.1, 25.3, 2.2, 0.7]
-            },
-            'dashboard_navigation': {
-                'steps': [
-                    'dashboard:my-book:widget:render',
-                    'dashboard:my-book:layout:render',
-                    'dashboard:my-book::view',
-                    'dashboard:my-book::action-click',
-                    'dashboard:my-book:recent-actions-table:account-click'
-                ],
-                'user_counts': [99140, 37430, 37406, 5707, 916],
-                'conversion_rates': [100, 37.8, 37.7, 5.8, 0.9]
-            },
-            'construction_rating': {
-                'steps': [
-                    'account-lines:::view',
-                    'account-lines::construction-excess-rater:create-document-click',
-                    'account-lines::construction-excess-rater:save-new-quote-click',
-                    'account-lines::construction-excess-rater:modify-existing-quote-click'
-                ],
-                'user_counts': [108249, 104, 66, 64],
-                'conversion_rates': [100, 0.1, 0.06, 0.06]
-            }
-        }
-
-        # Combine original and new funnels
-        all_funnels = {**original_funnels, **additional_funnels}
-        results['journey_analysis']['conversion_funnels'] = all_funnels
-
-        # Create funnel visualizations
-        for funnel_name, funnel_data in results['journey_analysis']['conversion_funnels'].items():
-            st.write(f"**{funnel_name.replace('_', ' ').title()}**")
-            
-            funnel_df = pd.DataFrame({
-                'Step': [step.split(':')[-1].replace('-', ' ').title() for step in funnel_data['steps']],
-                'Users': funnel_data['user_counts'],
-                'Conversion Rate': [f"{rate:.1f}%" for rate in funnel_data['conversion_rates']]
-            })
-            
-            fig = go.Figure(go.Funnel(
-                y=funnel_df['Step'],
-                x=funnel_df['Users'],
-                textinfo="value+percent previous",
-                textposition="inside",
-                textfont=dict(size=12),
-                marker=dict(
-                    color=CUSTOM_COLORS[:len(funnel_df)],
-                    line=dict(width=2, color='white')
-                )
-            ))
-            
-            fig.update_layout(
-                title=dict(
-                    text=f"{funnel_name.replace('_', ' ').title()} Conversion",
-                    x=0.5,
-                    xanchor='center'
-                ),
-                width=None,
-                height=400,
-                margin=dict(t=60, l=120, r=20, b=20),
-                font=dict(size=12)
-            )
-            
-            st.plotly_chart(fig, use_container_width=True)
-            
-            # Display funnel metrics in a table
-            st.write("Detailed Metrics:")
-            st.dataframe(funnel_df, use_container_width=True)
-            
-            # Calculate and display drop-off rates
-            if len(funnel_df) > 1:
-                drop_offs = []
-                for i in range(len(funnel_df) - 1):
-                    current = funnel_df['Users'].iloc[i]
-                    next_step = funnel_df['Users'].iloc[i + 1]
-                    drop_off = ((current - next_step) / current) * 100
-                    drop_offs.append({
-                        'From Step': funnel_df['Step'].iloc[i],
-                        'To Step': funnel_df['Step'].iloc[i + 1],
-                        'Drop-off Rate': f"{drop_off:.1f}%"
-                    })
-                
-                st.write("Drop-off Analysis:")
-                st.dataframe(pd.DataFrame(drop_offs), use_container_width=True)
-            
-            st.markdown("---")
-    
 
 def create_temporal_relationship_plots(results):
     st.header("Temporal Relationships")
@@ -590,9 +487,9 @@ def create_temporal_relationship_plots(results):
         st.subheader("Peak Hours")
         peak_hours = hourly_patterns['peak_hours']
         peak_df = pd.DataFrame({
-            'Hour': [f"{str(int(hour)).zfill(2)}:00" for hour in peak_hours.keys()],  # Format hours as "HH:00"
+            'Hour': [f"{str(int(hour)).zfill(2)}:00" for hour in peak_hours.keys()],
             'Events': list(peak_hours.values())
-        }).sort_values('Events', ascending=False)  # Sort by events in descending order
+        }).sort_values('Events', ascending=False)
         
         fig = go.Figure()
         fig.add_trace(
